@@ -1,0 +1,888 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+    X-Summit Bikes | Integrated Business Planning Simulation
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --login-ink: #0a1722;
+        --login-deep: #102630;
+        --login-teal: #2c7773;
+        --login-mist: #edf2f2;
+        --login-line: rgba(15, 38, 48, 0.10);
+    }
+
+    .login-shell {
+        position: relative;
+        min-height: calc(100vh - 148px);
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.28fr)
+            minmax(390px, 0.72fr);
+        overflow: hidden;
+        border: 1px solid var(--login-line);
+        border-radius: 34px;
+        background: #f5f7f7;
+        box-shadow:
+            0 34px 90px rgba(13, 35, 45, 0.14),
+            0 8px 24px rgba(13, 35, 45, 0.07);
+    }
+
+    /* ==========================================================
+       LEFT / EXPERIENCE SIDE
+       ========================================================== */
+
+    .login-story {
+        position: relative;
+        min-height: 790px;
+        overflow: hidden;
+        display: flex;
+        align-items: stretch;
+        color: #ffffff;
+        background: var(--login-ink);
+    }
+
+    .login-alpine-visual {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+    }
+
+    .login-alpine-visual img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        object-position: 62% 48%;
+        filter:
+            saturate(0.78)
+            contrast(1.02)
+            brightness(0.86);
+        transform: scale(1.015);
+    }
+
+    .login-alpine-visual::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(
+                circle at 18% 20%,
+                rgba(113, 193, 180, 0.16),
+                transparent 28rem
+            ),
+            linear-gradient(
+                90deg,
+                rgba(5, 16, 24, 0.96) 0%,
+                rgba(5, 16, 24, 0.88) 28%,
+                rgba(5, 16, 24, 0.58) 52%,
+                rgba(5, 16, 24, 0.18) 78%,
+                rgba(5, 16, 24, 0.08) 100%
+            ),
+            linear-gradient(
+                180deg,
+                rgba(5, 16, 24, 0.08) 0%,
+                rgba(5, 16, 24, 0.03) 56%,
+                rgba(5, 16, 24, 0.54) 100%
+            );
+        pointer-events: none;
+    }
+
+    .login-story-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: clamp(38px, 4.8vw, 68px);
+    }
+
+    .story-kicker {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        gap: 9px;
+
+        color: rgba(255,255,255,.62);
+
+        font-size: .64rem;
+        font-weight: 850;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+    }
+
+    .story-kicker::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: rgba(126, 197, 191, 0.82);
+    }
+
+    .story-center {
+        max-width: 720px;
+        margin-top: auto;
+        padding: 0 0 clamp(44px, 6vh, 72px);
+    }
+
+    .login-story h1 {
+        max-width: 720px;
+        margin: 0;
+        color: #ffffff;
+
+        font-size: clamp(3.5rem, 6vw, 6.3rem);
+        line-height: .92;
+        font-weight: 690;
+        letter-spacing: -0.065em;
+
+        text-shadow:
+            0 18px 42px rgba(0,0,0,.24);
+    }
+
+    .title-accent {
+        width: 72px;
+        height: 3px;
+        margin-top: 22px;
+
+        border-radius: 999px;
+        background:
+            linear-gradient(
+                90deg,
+                rgba(126,197,191,.98),
+                rgba(189,220,213,.54)
+            );
+    }
+
+    .author-line {
+        margin-top: 20px;
+
+        color: rgba(255,255,255,.92);
+
+        font-size: .95rem;
+        line-height: 1.5;
+        font-weight: 630;
+        letter-spacing: .012em;
+    }
+
+    .author-line span {
+        color: rgba(255,255,255,.46);
+        padding: 0 6px;
+    }
+
+    .school-affiliation {
+        display: flex;
+        align-items: center;
+        margin-top: 14px;
+    }
+
+    .school-logo {
+        width: 250px;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+        background: transparent;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .executive-challenge {
+        max-width: 650px;
+        margin-top: 26px;
+        padding: 17px 19px 16px;
+
+        border: 1px solid rgba(255,255,255,.10);
+        border-left: 3px solid rgba(126,197,191,.72);
+        border-radius: 0 16px 16px 0;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(8, 25, 33, .48),
+                rgba(8, 25, 33, .24)
+            );
+
+        backdrop-filter: blur(14px);
+        box-shadow:
+            0 16px 36px rgba(0,0,0,.10);
+    }
+
+    .executive-challenge-label {
+        color: rgba(188, 225, 217, .88);
+
+        font-size: .60rem;
+        font-weight: 900;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .executive-challenge p {
+        margin: 9px 0 0;
+
+        color: rgba(255,255,255,.78);
+
+        font-size: .91rem;
+        line-height: 1.68;
+    }
+
+    .decision-strip {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex-wrap: wrap;
+
+        max-width: 760px;
+        margin-top: 22px;
+
+        color: rgba(255,255,255,.72);
+
+        font-size: .64rem;
+        font-weight: 850;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+    }
+
+    .decision-strip span {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .decision-strip span:not(:last-child)::after {
+        content: "·";
+        margin: 0 10px;
+        color: rgba(126,197,191,.62);
+    }
+
+    /* ==========================================================
+       RIGHT / LOGIN SIDE
+       ========================================================== */
+
+    .login-form-side {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: clamp(34px, 4vw, 58px);
+        background:
+            radial-gradient(
+                circle at 100% 0%,
+                rgba(89, 155, 149, .10),
+                transparent 20rem
+            ),
+            linear-gradient(
+                180deg,
+                #fbfcfc,
+                #f3f6f6
+            );
+    }
+
+    .login-form-side::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 1px;
+        background:
+            linear-gradient(
+                180deg,
+                transparent,
+                rgba(12, 44, 55, .12) 14%,
+                rgba(12, 44, 55, .12) 86%,
+                transparent
+            );
+    }
+
+    .login-form-wrap {
+        width: min(420px, 100%);
+        margin: 0 auto;
+        padding: 28px;
+        border: 1px solid rgba(18, 49, 63, .08);
+        border-radius: 24px;
+        background: rgba(255,255,255,.76);
+        box-shadow:
+            0 24px 60px rgba(26, 56, 68, .08),
+            inset 0 1px 0 rgba(255,255,255,.78);
+        backdrop-filter: blur(16px);
+    }
+
+
+
+    .login-brand-symbol {
+        width: 132px;
+        height: 102px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 24px;
+    }
+
+    .login-brand-symbol-img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: contain;
+        object-position: left center;
+        filter:
+            drop-shadow(
+                0 10px 20px rgba(11, 29, 45, 0.18)
+            );
+    }
+
+    .login-heading {
+        margin: 0;
+        color: var(--login-ink);
+        font-size: clamp(2.2rem, 4vw, 3.15rem);
+        letter-spacing: -0.055em;
+        line-height: .98;
+    }
+
+    .login-intro {
+        max-width: 350px;
+        margin: 13px 0 0;
+        color: #65767d;
+        font-size: .91rem;
+        line-height: 1.68;
+    }
+
+    .login-form {
+        display: grid;
+        gap: 17px;
+        margin-top: 28px;
+    }
+
+    .login-field {
+        display: grid;
+        gap: 8px;
+    }
+
+    .login-field label {
+        color: #173744;
+        font-size: .72rem;
+        font-weight: 850;
+        letter-spacing: .02em;
+    }
+
+    .login-field input {
+        min-height: 54px;
+        padding: 13px 14px;
+        border: 1px solid rgba(26, 58, 70, .12) !important;
+        border-radius: 13px !important;
+        background: rgba(255,255,255,.90) !important;
+        font-size: .94rem;
+        transition:
+            border-color .18s ease,
+            box-shadow .18s ease,
+            transform .18s ease;
+    }
+
+    .login-field input:focus {
+        border-color: rgba(44,119,115,.42) !important;
+        box-shadow:
+            0 0 0 4px rgba(44,119,115,.08) !important;
+        transform: translateY(-1px);
+    }
+
+    .login-alert {
+        padding: 14px 16px;
+        color: #842f35;
+        border:
+            1px solid rgba(191, 66, 72, 0.22);
+        border-left: 4px solid var(--red-600);
+        border-radius: 13px;
+        background: var(--red-100);
+        font-size: .82rem;
+        line-height: 1.55;
+    }
+
+    .login-alert strong {
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .login-submit {
+        width: 100%;
+        min-height: 56px;
+        margin-top: 3px;
+        border-radius: 13px;
+        font-size: .9rem;
+        box-shadow: 0 18px 30px rgba(44,119,115,.18);
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease;
+    }
+
+    .login-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 22px 38px rgba(44,119,115,.24);
+    }
+
+    .login-submit::after {
+        content: "→";
+        margin-left: 10px;
+        font-size: 1rem;
+    }
+
+    .login-security {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 19px;
+        color: #74848a;
+        border-top: 1px solid rgba(18, 49, 63, .08);
+        font-size: .72rem;
+        line-height: 1.55;
+    }
+
+    .login-security-mark {
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        color: #176147;
+        border-radius: 50%;
+        background: #e9f3ee;
+        font-size: .70rem;
+        font-weight: 900;
+    }
+
+    /* ==========================================================
+       ACCOUNT ENTRY OPTIONS
+       ========================================================== */
+
+    .login-account-options {
+        margin-top: 20px;
+        padding-top: 19px;
+        border-top: 1px solid rgba(18, 49, 63, .08);
+    }
+
+    .login-account-divider {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-bottom: 12px;
+        color: #7b8a8f;
+        font-size: .67rem;
+        font-weight: 800;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+    }
+
+    .login-account-divider::before,
+    .login-account-divider::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: rgba(18, 49, 63, .08);
+    }
+
+    .login-account-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .login-account-card {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid rgba(23, 55, 68, .10);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, .78);
+        box-shadow:
+            0 8px 20px rgba(25, 55, 67, .035),
+            inset 0 1px 0 rgba(255, 255, 255, .82);
+    }
+
+    .login-account-card.player {
+        background:
+            linear-gradient(
+                145deg,
+                rgba(241, 247, 245, .95),
+                rgba(248, 250, 250, .96)
+            );
+    }
+
+    .login-account-kicker {
+        display: inline-flex;
+        width: fit-content;
+        margin-bottom: 7px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        background: #e9f3ef;
+        color: #3d746a;
+        font-size: .56rem;
+        font-weight: 900;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+    }
+
+    .login-account-card.player .login-account-kicker {
+        background: #edf2f3;
+        color: #526b72;
+    }
+
+    .login-account-card strong {
+        display: block;
+        color: #15343f;
+        font-size: .82rem;
+        line-height: 1.32;
+        font-weight: 800;
+    }
+
+    .login-account-short {
+        display: block;
+        margin-top: 6px;
+        color: #728188;
+        font-size: .68rem;
+        line-height: 1.43;
+    }
+
+    .login-account-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+        color: #2f716d;
+        font-size: .65rem;
+        font-weight: 850;
+        text-decoration: none;
+    }
+
+    .login-account-action:hover {
+        color: #235c59;
+    }
+
+
+    /* ==========================================================
+       RESPONSIVE
+       ========================================================== */
+
+    @media (max-width: 1040px) {
+        .login-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .login-story {
+            min-height: 720px;
+        }
+
+        .login-form-side::before {
+            display: none;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .login-shell {
+            border-radius: 22px;
+        }
+
+        .login-story {
+            min-height: 680px;
+        }
+
+        .login-story-content {
+            padding: 28px 24px;
+        }
+
+        .story-center {
+            margin-top: auto;
+            padding: 70px 0 34px;
+        }
+
+        .login-story h1 {
+            font-size: clamp(3.2rem, 14vw, 5rem);
+        }
+
+        .decision-strip {
+            gap: 8px 0;
+        }
+
+
+        .login-form-side {
+            padding: 28px 20px;
+        }
+
+        .login-form-wrap {
+            padding: 22px;
+            border-radius: 20px;
+        }
+
+        .login-brand-symbol {
+            width: 112px;
+            height: 86px;
+            margin-bottom: 20px;
+        }
+
+        .login-account-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .school-logo {
+            width: 225px;
+        }
+
+        .school-logo {
+            width: 225px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="login-shell">
+    <div class="login-story">
+
+        <div class="login-alpine-visual">
+            <img
+                src="{% static 'simulation/login/alpine_trail.png' %}"
+                alt="Mountain biker riding an alpine trail"
+            >
+        </div>
+
+        <div class="login-story-content">
+
+
+
+            <div class="story-center">
+
+                <h1>
+                    X-Summit Bikes
+                </h1>
+
+                <div class="title-accent"></div>
+
+                <div class="author-line">
+                    Murat Kristal
+                    <span>·</span>
+                    Işık Biçer
+                </div>
+
+                <div class="school-affiliation">
+                    <img
+                        src="{% static 'simulation/logo/schulich_logo.png' %}"
+                        alt="Schulich School of Business, York University"
+                        class="school-logo"
+                    >
+                </div>
+
+                <div class="executive-challenge">
+
+                    <div class="executive-challenge-label">
+                        The Challenge
+                    </div>
+
+                    <p>
+                        Step into the role of an executive team responsible for
+                        turning uncertain demand into disciplined growth. Every
+                        pricing, replenishment, and operating decision changes
+                        the financial outcome.
+                    </p>
+
+                </div>
+
+                <div
+                    class="decision-strip"
+                    aria-label="Simulation decision areas"
+                >
+                    <span>Pricing</span>
+                    <span>Demand</span>
+                    <span>Inventory</span>
+                    <span>Operations</span>
+                    <span>Finance</span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="login-form-side">
+        <div class="login-form-wrap">
+            <div class="login-brand-symbol">
+                <img
+                    src="{% static 'simulation/logo/x_logo.png' %}"
+                    alt="X-Summit Bikes"
+                    class="login-brand-symbol-img"
+                >
+            </div>
+
+            <h2 class="login-heading">
+                Experience the Simulation
+            </h2>
+
+
+            {% if form.errors %}
+                <div
+                    class="login-alert"
+                    role="alert"
+                    style="margin-top:22px;"
+                >
+                    <strong>Unable to sign in</strong>
+
+                    Please verify your username and password,
+                    then try again.
+                </div>
+            {% endif %}
+
+            {% if next %}
+                {% if request.user.is_authenticated %}
+                    <div
+                        class="login-alert"
+                        role="alert"
+                        style="margin-top:22px;"
+                    >
+                        <strong>Different access required</strong>
+
+                        Your current account does not have permission
+                        to open that page.
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <form
+                method="post"
+                action="{% url 'login' %}"
+                class="login-form"
+                novalidate
+            >
+                {% csrf_token %}
+
+                <div class="login-field">
+                    <label for="{{ form.username.id_for_label }}">
+                        Username
+                    </label>
+
+                    {{ form.username }}
+
+                    {% if form.username.errors %}
+                        {{ form.username.errors }}
+                    {% endif %}
+                </div>
+
+                <div class="login-field">
+                    <label for="{{ form.password.id_for_label }}">
+                        Password
+                    </label>
+
+                    {{ form.password }}
+
+                    {% if form.password.errors %}
+                        {{ form.password.errors }}
+                    {% endif %}
+                </div>
+
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ next }}"
+                >
+
+                <button
+                    type="submit"
+                    class="btn btn-primary login-submit"
+                >
+                    Start the Challenge
+                </button>
+            </form>
+
+            <div class="login-account-options">
+
+                <div class="login-account-divider">
+                    <span>
+                        New to X-Summit Bikes?
+                    </span>
+                </div>
+
+                <div class="login-account-grid">
+
+                    <div class="login-account-card">
+
+                        <span class="login-account-kicker">
+                            Instructor
+                        </span>
+
+                        <strong>
+                            Create Instructor Account
+                        </strong>
+
+                        <span class="login-account-short">
+                            Design and manage your own simulations.
+                        </span>
+
+                        <a
+                            href="{% url 'instructor_signup' %}"
+                            class="login-account-action"
+                        >
+                            Create account →
+                        </a>
+
+                    </div>
+
+
+                    <div class="login-account-card player">
+
+                        <span class="login-account-kicker">
+                            Player
+                        </span>
+
+                        <strong>
+                            Join as Player
+                        </strong>
+
+                        <span class="login-account-short">
+                            Join using your instructor's private invitation.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const usernameInput = document.getElementById(
+            "{{ form.username.id_for_label }}"
+        );
+
+        const passwordInput = document.getElementById(
+            "{{ form.password.id_for_label }}"
+        );
+
+        if (usernameInput) {
+            usernameInput.classList.add("form-control");
+            usernameInput.setAttribute(
+                "autocomplete",
+                "username"
+            );
+            usernameInput.setAttribute(
+                "placeholder",
+                "Enter your username"
+            );
+            usernameInput.focus();
+        }
+
+        if (passwordInput) {
+            passwordInput.classList.add("form-control");
+            passwordInput.setAttribute(
+                "autocomplete",
+                "current-password"
+            );
+            passwordInput.setAttribute(
+                "placeholder",
+                "Enter your password"
+            );
+        }
+    });
+</script>
+{% endblock %}

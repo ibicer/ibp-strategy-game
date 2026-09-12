@@ -1,0 +1,1448 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Instructor Dashboard | {{ game.name }} | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .dashboard-page {
+        min-height: calc(100vh - 70px);
+        padding: 42px 28px 64px;
+
+        background:
+            radial-gradient(
+                circle at 8% 4%,
+                rgba(109, 165, 151, 0.10),
+                transparent 28%
+            ),
+            linear-gradient(
+                180deg,
+                #f6f9f8 0%,
+                #edf3f1 100%
+            );
+    }
+
+    .dashboard-shell {
+        width: min(100%, 1420px);
+        margin: 0 auto;
+    }
+
+    /* ==============================================================
+       HERO
+       ============================================================== */
+
+    .dashboard-hero {
+        position: relative;
+        overflow: hidden;
+
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 34px;
+        align-items: center;
+
+        padding: 38px 40px;
+
+        border: 1px solid rgba(21, 56, 65, 0.09);
+        border-radius: 24px;
+
+        background:
+            linear-gradient(
+                120deg,
+                rgba(14, 38, 50, 0.98) 0%,
+                rgba(30, 70, 74, 0.96) 62%,
+                rgba(67, 111, 102, 0.93) 100%
+            );
+
+        color: #ffffff;
+
+        box-shadow:
+            0 18px 48px rgba(20, 49, 57, 0.12),
+            0 4px 14px rgba(20, 49, 57, 0.05);
+    }
+
+    .dashboard-hero::after {
+        content: "";
+        position: absolute;
+
+        width: 350px;
+        height: 350px;
+
+        right: -120px;
+        top: -170px;
+
+        border-radius: 50%;
+        background: rgba(183, 221, 210, 0.10);
+
+        pointer-events: none;
+    }
+
+    .dashboard-hero-copy,
+    .dashboard-hero-side {
+        position: relative;
+        z-index: 2;
+    }
+
+    .dashboard-brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        margin-bottom: 18px;
+    }
+
+    .dashboard-logo {
+        width: 88px;
+        height: auto;
+        display: block;
+    }
+
+    .dashboard-kicker {
+        color: rgba(255, 255, 255, 0.64);
+
+        font-size: 0.69rem;
+        font-weight: 760;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-title {
+        margin: 0;
+
+        font-size: clamp(2.15rem, 4.2vw, 4.1rem);
+        line-height: 1;
+        font-weight: 670;
+        letter-spacing: -0.043em;
+    }
+
+    .dashboard-copy {
+        max-width: 760px;
+        margin: 16px 0 0;
+
+        color: rgba(255, 255, 255, 0.73);
+
+        font-size: 0.96rem;
+        line-height: 1.68;
+    }
+
+    .dashboard-hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+
+        margin-top: 22px;
+    }
+
+    .hero-primary,
+    .hero-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 44px;
+        padding: 10px 15px;
+
+        border-radius: 10px;
+
+        font-size: 0.79rem;
+        font-weight: 750;
+        text-decoration: none;
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease,
+            background 0.16s ease;
+    }
+
+    .hero-primary {
+        background: #ffffff;
+        color: #183d46;
+
+        box-shadow: 0 8px 18px rgba(3, 17, 24, 0.15);
+    }
+
+    .hero-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+    }
+
+    .hero-primary:hover,
+    .hero-secondary:hover {
+        transform: translateY(-1px);
+    }
+
+    .hero-secondary:hover {
+        background: rgba(255, 255, 255, 0.11);
+    }
+
+    .dashboard-hero-card {
+        padding: 20px;
+
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 16px;
+
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(10px);
+    }
+
+    .dashboard-hero-label {
+        margin-bottom: 7px;
+
+        color: rgba(255, 255, 255, 0.52);
+
+        font-size: 0.66rem;
+        font-weight: 760;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-hero-name {
+        margin: 0;
+
+        color: #ffffff;
+
+        font-size: 1.08rem;
+        font-weight: 730;
+        line-height: 1.35;
+    }
+
+    .dashboard-hero-meta {
+        margin-top: 7px;
+
+        color: rgba(255, 255, 255, 0.64);
+
+        font-size: 0.76rem;
+        line-height: 1.5;
+    }
+
+    /* ==============================================================
+       METRICS
+       ============================================================== */
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+
+        margin-top: 22px;
+    }
+
+    .metric-card {
+        padding: 18px 19px;
+
+        border: 1px solid rgba(24, 58, 65, 0.09);
+        border-radius: 15px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        box-shadow:
+            0 9px 24px rgba(25, 55, 61, 0.055),
+            0 2px 7px rgba(25, 55, 61, 0.025);
+    }
+
+    .metric-label {
+        display: block;
+
+        color: #84938f;
+
+        font-size: 0.64rem;
+        font-weight: 760;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        display: block;
+
+        margin-top: 7px;
+
+        color: #1d4149;
+
+        font-size: 1.72rem;
+        line-height: 1;
+        font-weight: 760;
+        letter-spacing: -0.03em;
+    }
+
+    .metric-note {
+        display: block;
+
+        margin-top: 7px;
+
+        color: #7a8987;
+
+        font-size: 0.70rem;
+        line-height: 1.4;
+    }
+
+    /* ==============================================================
+       GENERIC PANELS
+       ============================================================== */
+
+    .dashboard-section {
+        margin-top: 24px;
+    }
+
+    .dashboard-panel {
+        overflow: hidden;
+
+        border: 1px solid rgba(24, 58, 65, 0.09);
+        border-radius: 20px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        box-shadow:
+            0 12px 32px rgba(25, 55, 61, 0.065),
+            0 2px 8px rgba(25, 55, 61, 0.03);
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 20px;
+
+        padding: 23px 25px 19px;
+
+        border-bottom: 1px solid #e7eeeb;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #f8fbf9 100%
+            );
+    }
+
+    .panel-kicker {
+        margin-bottom: 5px;
+
+        color: #718480;
+
+        font-size: 0.66rem;
+        font-weight: 760;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .panel-title {
+        margin: 0;
+
+        color: #173740;
+
+        font-size: 1.28rem;
+        line-height: 1.2;
+        font-weight: 730;
+        letter-spacing: -0.024em;
+    }
+
+    .panel-copy {
+        max-width: 760px;
+        margin: 7px 0 0;
+
+        color: #748385;
+
+        font-size: 0.82rem;
+        line-height: 1.55;
+    }
+
+    .panel-body {
+        padding: 24px 25px 26px;
+    }
+
+    .panel-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 39px;
+        padding: 8px 12px;
+
+        border-radius: 9px;
+
+        background: #214f59;
+        color: #ffffff;
+
+        font-size: 0.75rem;
+        font-weight: 750;
+        text-decoration: none;
+    }
+
+    .panel-action.secondary {
+        border: 1px solid #d8e2df;
+        background: #ffffff;
+        color: #4c666a;
+    }
+
+    /* ==============================================================
+       INVITE
+       ============================================================== */
+
+    .invite-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .invite-url {
+        width: 100%;
+
+        padding: 11px 12px;
+
+        border: 1px solid #cfdcd8;
+        border-radius: 10px;
+
+        background: #f9fbfa;
+        color: #345258;
+
+        font-size: 0.78rem;
+        outline: none;
+    }
+
+    .copy-button {
+        min-height: 43px;
+        padding: 9px 13px;
+
+        border: 0;
+        border-radius: 10px;
+
+        background: #214f59;
+        color: #ffffff;
+
+        cursor: pointer;
+
+        font-size: 0.74rem;
+        font-weight: 750;
+    }
+
+    .copy-status {
+        min-height: 18px;
+        margin-top: 7px;
+
+        color: #4f7e73;
+
+        font-size: 0.70rem;
+        font-weight: 650;
+    }
+
+    /* ==============================================================
+       PLAYER TABLE
+       ============================================================== */
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+    }
+
+    .dashboard-table th {
+        padding: 11px 12px;
+
+        border-bottom: 1px solid #dce6e2;
+
+        background: #f5f9f7;
+        color: #70817e;
+
+        text-align: left;
+
+        font-size: 0.65rem;
+        font-weight: 760;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .dashboard-table td {
+        padding: 13px 12px;
+
+        border-bottom: 1px solid #edf1ef;
+
+        color: #496166;
+
+        font-size: 0.78rem;
+        vertical-align: middle;
+    }
+
+    .dashboard-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .dashboard-table tbody tr:hover {
+        background: #fbfdfc;
+    }
+
+    .player-name {
+        color: #24464d;
+
+        font-size: 0.82rem;
+        font-weight: 730;
+    }
+
+    .player-meta {
+        margin-top: 3px;
+
+        color: #879491;
+
+        font-size: 0.69rem;
+    }
+
+    .progress-badge,
+    .year-badge,
+    .complete-badge {
+        display: inline-flex;
+        align-items: center;
+
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        font-size: 0.66rem;
+        font-weight: 740;
+        white-space: nowrap;
+    }
+
+    .progress-badge {
+        background: #eef5f2;
+        color: #4d746c;
+    }
+
+    .complete-badge {
+        background: #e8f4ee;
+        color: #3f7467;
+    }
+
+    .year-badge {
+        background: #f1f4f3;
+        color: #647775;
+    }
+
+    .year-result {
+        display: grid;
+        gap: 3px;
+        min-width: 128px;
+    }
+
+    .year-result-main {
+        color: #294c53;
+
+        font-size: 0.76rem;
+        font-weight: 720;
+    }
+
+    .year-result-sub {
+        color: #81908d;
+
+        font-size: 0.67rem;
+        line-height: 1.35;
+    }
+
+    .summary-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 34px;
+        padding: 7px 10px;
+
+        border-radius: 8px;
+
+        background: #214f59;
+        color: #ffffff;
+
+        font-size: 0.70rem;
+        font-weight: 740;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .summary-disabled {
+        color: #9aa6a3;
+
+        font-size: 0.69rem;
+        white-space: nowrap;
+    }
+
+    /* ==============================================================
+       COHORT STATISTICS
+       ============================================================== */
+
+    .cohort-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .cohort-card {
+        overflow: hidden;
+
+        border: 1px solid #dde7e3;
+        border-radius: 15px;
+
+        background: #fbfdfc;
+    }
+
+    .cohort-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+
+        padding: 15px 17px;
+
+        border-bottom: 1px solid #e5ece9;
+        background: #f5f9f7;
+    }
+
+    .cohort-year {
+        color: #294950;
+
+        font-size: 0.91rem;
+        font-weight: 730;
+    }
+
+    .cohort-count {
+        color: #7b8986;
+
+        font-size: 0.68rem;
+        font-weight: 650;
+    }
+
+    .stat-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .stat-table th,
+    .stat-table td {
+        padding: 10px 11px;
+        border-bottom: 1px solid #edf1ef;
+
+        font-size: 0.70rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .stat-table th {
+        background: #fbfdfc;
+        color: #7c8b88;
+
+        font-size: 0.61rem;
+        font-weight: 760;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .stat-table th:first-child,
+    .stat-table td:first-child {
+        text-align: left;
+    }
+
+    .stat-table td:first-child {
+        color: #4c6468;
+        font-weight: 680;
+    }
+
+    .stat-table td {
+        color: #5f7275;
+    }
+
+    .stat-table tr:last-child td {
+        border-bottom: 0;
+    }
+
+    /* ==============================================================
+       EMPTY STATE
+       ============================================================== */
+
+    .empty-state {
+        padding: 34px 24px;
+
+        border: 1px dashed #cfddd8;
+        border-radius: 14px;
+
+        background: #fafcfb;
+
+        text-align: center;
+    }
+
+    .empty-state h3 {
+        margin: 0;
+
+        color: #29484f;
+
+        font-size: 1rem;
+        font-weight: 730;
+    }
+
+    .empty-state p {
+        max-width: 560px;
+        margin: 8px auto 0;
+
+        color: #7a8986;
+
+        font-size: 0.78rem;
+        line-height: 1.55;
+    }
+
+    @media (max-width: 1100px) {
+        .dashboard-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-hero-side {
+            max-width: 620px;
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cohort-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .dashboard-page {
+            padding: 24px 16px 44px;
+        }
+
+        .dashboard-hero {
+            padding: 28px 22px;
+            border-radius: 19px;
+        }
+
+        .dashboard-logo {
+            width: 76px;
+        }
+
+        .metric-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .panel-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .panel-header,
+        .panel-body {
+            padding-left: 19px;
+            padding-right: 19px;
+        }
+
+        .invite-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-hero-actions {
+            flex-direction: column;
+        }
+
+        .hero-primary,
+        .hero-secondary {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="dashboard-page">
+
+    <div class="dashboard-shell">
+
+        <!-- ======================================================
+             HERO
+             ====================================================== -->
+
+        <section class="dashboard-hero">
+
+            <div class="dashboard-hero-copy">
+
+                <div class="dashboard-brand">
+
+                    <img
+                        src="{% static 'simulation/logo/x_logo.png' %}"
+                        alt="X-Summit Bikes"
+                        class="dashboard-logo"
+                    >
+
+                    <div class="dashboard-kicker">
+                        Instructor Dashboard
+                    </div>
+
+                </div>
+
+                <h1 class="dashboard-title">
+                    {{ game.name }}
+                </h1>
+
+                <p class="dashboard-copy">
+                    Monitor participant progress, review individual outcomes,
+                    compare cohort performance, and manage the learning
+                    experience from one instructor control room.
+                </p>
+
+
+                <div class="dashboard-hero-actions">
+
+                    <a
+                        href="{% url 'game_design' code=game.code %}"
+                        class="hero-primary"
+                    >
+                        Simulation Design
+                    </a>
+
+                    <a
+                        href="{% url 'instructor_workspace' %}"
+                        class="hero-secondary"
+                    >
+                        Instructor Workspace
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <aside class="dashboard-hero-side">
+
+                <div class="dashboard-hero-card">
+
+                    <div class="dashboard-hero-label">
+                        Simulation Access
+                    </div>
+
+                    <h2 class="dashboard-hero-name">
+                        {{ game.get_status_display }}
+                    </h2>
+
+                    <div class="dashboard-hero-meta">
+                        Game reference: {{ game.code }}
+                        <br>
+                        Player enrollment is managed through the
+                        private invitation link below.
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+        <!-- ======================================================
+             METRICS
+             ====================================================== -->
+
+        <div class="metric-grid">
+
+            <article class="metric-card">
+
+                <span class="metric-label">
+                    Registered Players
+                </span>
+
+                <strong class="metric-value">
+                    {{ registered_player_count }}
+                </strong>
+
+                <span class="metric-note">
+                    Participants enrolled in this simulation
+                </span>
+
+            </article>
+
+
+            <article class="metric-card">
+
+                <span class="metric-label">
+                    Completed
+                </span>
+
+                <strong class="metric-value">
+                    {{ completed_player_count }}
+                </strong>
+
+                <span class="metric-note">
+                    Players who reached the combined results summary
+                </span>
+
+            </article>
+
+
+            <article class="metric-card">
+
+                <span class="metric-label">
+                    Completion Rate
+                </span>
+
+                <strong class="metric-value">
+                    {% if registered_player_count %}
+                        {% widthratio completed_player_count registered_player_count 100 %}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </strong>
+
+                <span class="metric-note">
+                    Cohort completion across the full simulation
+                </span>
+
+            </article>
+
+
+            <article class="metric-card">
+
+                <span class="metric-label">
+                    Simulation Status
+                </span>
+
+                <strong
+                    class="metric-value"
+                    style="font-size: 1.32rem;"
+                >
+                    {{ game.get_status_display }}
+                </strong>
+
+                <span class="metric-note">
+                    Instructor-controlled simulation environment
+                </span>
+
+            </article>
+
+        </div>
+
+
+        <!-- ======================================================
+             INVITE LINK
+             ====================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="dashboard-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            Participant Access
+                        </div>
+
+                        <h2 class="panel-title">
+                            Private invitation link
+                        </h2>
+
+                        <p class="panel-copy">
+                            Share this link with participants who should join
+                            {{ game.name }}. New players can create an account;
+                            existing players can sign in and join automatically.
+                        </p>
+
+                    </div>
+
+                    <a
+                        href="{% url 'game_design' code=game.code %}"
+                        class="panel-action secondary"
+                    >
+                        Design Settings
+                    </a>
+
+                </div>
+
+
+                <div class="panel-body">
+
+                    <div class="invite-layout">
+
+                        <input
+                            type="text"
+                            id="dashboard-invite-url"
+                            class="invite-url"
+                            value="{{ invite_url }}"
+                            readonly
+                            aria-label="Private simulation invitation link"
+                        >
+
+                        <button
+                            type="button"
+                            id="dashboard-copy-invite"
+                            class="copy-button"
+                        >
+                            Copy Invite Link
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="dashboard-copy-status"
+                        class="copy-status"
+                        aria-live="polite"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             PLAYER PROGRESS
+             ====================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="dashboard-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            Participant Progress
+                        </div>
+
+                        <h2 class="panel-title">
+                            Individual simulation status
+                        </h2>
+
+                        <p class="panel-copy">
+                            Follow each participant through the simulation and
+                            open the final read-only summary after all required
+                            years have been completed.
+                        </p>
+
+                    </div>
+
+                    <a
+                        href="{% url 'add_player' code=game.code %}"
+                        class="panel-action secondary"
+                    >
+                        Add Player Manually
+                    </a>
+
+                </div>
+
+
+                <div class="panel-body">
+
+                    {% if player_rows %}
+
+                        <div class="table-wrap">
+
+                            <table class="dashboard-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Participant</th>
+                                        <th>Progress</th>
+
+                                        {% for scenario_year in cohort_years %}
+                                            <th>
+                                                Year {{ scenario_year.scenario_year.year_number }}
+                                            </th>
+                                        {% endfor %}
+
+                                        <th>Final Summary</th>
+                                    </tr>
+                                </thead>
+
+
+                                <tbody>
+
+                                    {% for row in player_rows %}
+
+                                        <tr>
+
+                                            <td>
+
+                                                <div class="player-name">
+                                                    {{ row.user.get_full_name|default:row.user.username }}
+                                                </div>
+
+                                                <div class="player-meta">
+                                                    {{ row.user.email|default:row.user.username }}
+                                                </div>
+
+                                            </td>
+
+
+                                            <td>
+
+                                                {% if row.progress_label == "Completed" %}
+                                                    <span class="complete-badge">
+                                                        Completed
+                                                    </span>
+                                                {% else %}
+                                                    <span class="progress-badge">
+                                                        {{ row.progress_label }}
+                                                    </span>
+                                                {% endif %}
+
+                                            </td>
+
+
+                                            {% for year_cell in row.year_cells %}
+
+                                                <td>
+
+                                                    {% if year_cell.score %}
+
+                                                        <div class="year-result">
+
+                                                            <span class="year-result-main">
+                                                                Profit
+                                                                ${{ year_cell.score.profit|floatformat:0 }}
+                                                            </span>
+
+                                                            <span class="year-result-sub">
+                                                                Revenue
+                                                                ${{ year_cell.score.revenue|floatformat:0 }}
+                                                            </span>
+
+                                                            <span class="year-result-sub">
+                                                                ROIC
+                                                                {% if year_cell.score.operating_expense %}
+                                                                    {% widthratio year_cell.score.profit year_cell.score.operating_expense 100 %}%
+                                                                {% else %}
+                                                                    —
+                                                                {% endif %}
+                                                            </span>
+
+                                                        </div>
+
+                                                    {% else %}
+
+                                                        <span class="year-badge">
+                                                            In progress
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </td>
+
+                                            {% endfor %}
+
+
+                                            <td>
+
+                                                {% if row.can_view_summary %}
+
+                                                    <a
+                                                        href="{% url 'instructor_player_summary' code=game.code membership_id=row.membership.id %}"
+                                                        class="summary-link"
+                                                    >
+                                                        View Results
+                                                    </a>
+
+                                                {% else %}
+
+                                                    <span class="summary-disabled">
+                                                        Not available yet
+                                                    </span>
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="empty-state">
+
+                            <h3>
+                                No participants have joined yet
+                            </h3>
+
+                            <p>
+                                Share the private invitation link above.
+                                Participants will appear here automatically
+                                after creating or connecting their player account.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================================
+             COHORT STATISTICS
+             ====================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="dashboard-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            Cohort Analytics
+                        </div>
+
+                        <h2 class="panel-title">
+                            Class performance summary
+                        </h2>
+
+                        <p class="panel-copy">
+                            Each statistic uses one result per participant:
+                            the latest completed attempt for that simulation
+                            year. Earlier retries remain stored but do not
+                            double-count the participant.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel-body">
+
+                    {% if cohort_years %}
+
+                        <div class="cohort-grid">
+
+                            {% for cohort in cohort_years %}
+
+                                <article class="cohort-card">
+
+                                    <div class="cohort-card-header">
+
+                                        <div class="cohort-year">
+                                            Year {{ cohort.scenario_year.year_number }}
+                                        </div>
+
+                                        <div class="cohort-count">
+                                            {{ cohort.completed_players }}
+                                            completed
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="table-wrap">
+
+                                        <table class="stat-table">
+
+                                            <thead>
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Mean</th>
+                                                    <th>Median</th>
+                                                    <th>Minimum</th>
+                                                    <th>Maximum</th>
+                                                </tr>
+                                            </thead>
+
+
+                                            <tbody>
+
+                                                {% for stat in cohort.statistic_rows %}
+
+                                                    <tr>
+
+                                                        <td>
+                                                            {{ stat.label }}
+                                                        </td>
+
+
+                                                        {% if stat.count %}
+
+                                                            {% if stat.label == "ROIC" %}
+
+                                                                <td>
+                                                                    {% widthratio stat.mean 1 100 %}%
+                                                                </td>
+
+                                                                <td>
+                                                                    {% widthratio stat.median 1 100 %}%
+                                                                </td>
+
+                                                                <td>
+                                                                    {% widthratio stat.minimum 1 100 %}%
+                                                                </td>
+
+                                                                <td>
+                                                                    {% widthratio stat.maximum 1 100 %}%
+                                                                </td>
+
+                                                            {% elif stat.label == "Lost sales units" %}
+
+                                                                <td>
+                                                                    {{ stat.mean|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ stat.median|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ stat.minimum|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ stat.maximum|floatformat:0 }}
+                                                                </td>
+
+                                                            {% else %}
+
+                                                                <td>
+                                                                    ${{ stat.mean|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    ${{ stat.median|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    ${{ stat.minimum|floatformat:0 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    ${{ stat.maximum|floatformat:0 }}
+                                                                </td>
+
+                                                            {% endif %}
+
+                                                        {% else %}
+
+                                                            <td>—</td>
+                                                            <td>—</td>
+                                                            <td>—</td>
+                                                            <td>—</td>
+
+                                                        {% endif %}
+
+                                                    </tr>
+
+                                                {% endfor %}
+
+                                            </tbody>
+
+                                        </table>
+
+                                    </div>
+
+                                </article>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="empty-state">
+
+                            <h3>
+                                Cohort statistics are not available yet
+                            </h3>
+
+                            <p>
+                                Mean, median, minimum, and maximum results will
+                                appear as participants complete simulation years.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const copyButton = document.getElementById(
+            "dashboard-copy-invite"
+        );
+
+        const inviteInput = document.getElementById(
+            "dashboard-invite-url"
+        );
+
+        const copyStatus = document.getElementById(
+            "dashboard-copy-status"
+        );
+
+        if (!copyButton || !inviteInput) {
+            return;
+        }
+
+        copyButton.addEventListener("click", async function () {
+            const inviteUrl = inviteInput.value;
+
+            try {
+                if (
+                    navigator.clipboard
+                    && window.isSecureContext
+                ) {
+                    await navigator.clipboard.writeText(inviteUrl);
+                } else {
+                    inviteInput.focus();
+                    inviteInput.select();
+
+                    inviteInput.setSelectionRange(
+                        0,
+                        inviteInput.value.length
+                    );
+
+                    document.execCommand("copy");
+
+                    window.getSelection().removeAllRanges();
+                }
+
+                copyButton.textContent = "Copied";
+
+                copyStatus.textContent =
+                    "Invitation link copied to your clipboard.";
+
+                window.setTimeout(function () {
+                    copyButton.textContent = "Copy Invite Link";
+                    copyStatus.textContent = "";
+                }, 2500);
+
+            } catch (error) {
+                inviteInput.focus();
+                inviteInput.select();
+
+                copyStatus.textContent =
+                    "Select the invitation link above and copy it manually.";
+            }
+        });
+    });
+</script>
+
+{% endblock %}

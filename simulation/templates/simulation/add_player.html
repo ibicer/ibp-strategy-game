@@ -1,0 +1,171 @@
+{% extends "simulation/base.html" %}
+
+{% block title %}
+    Add Player | {{ game.name }}
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div>
+        <div class="eyebrow">
+            Participant Enrollment
+        </div>
+
+        <h1 class="page-title">
+            Add an executive team
+        </h1>
+
+        <p class="page-copy">
+            Enroll an existing user in
+            <strong>{{ game.name }}</strong>
+            as VP of Sales and Operations.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'admin_game_dashboard' code=game.code %}"
+        class="btn btn-light"
+    >
+        Back to Control Room
+    </a>
+</header>
+
+<div class="grid grid-2">
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="eyebrow">
+                    Player Setup
+                </div>
+
+                <h2>
+                    Participant information
+                </h2>
+
+                <p>
+                    Choose a registered account and optionally assign
+                    a team name for leaderboard reporting.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="callout danger">
+                        {{ form.non_field_errors }}
+                    </div>
+
+                    <div class="section-spacer"></div>
+                {% endif %}
+
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-field full">
+                            {{ field.label_tag }}
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <small>
+                                    {{ field.help_text }}
+                                </small>
+                            {% endif %}
+
+                            {{ field.errors }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="button-row">
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Add Player
+                    </button>
+
+                    <a
+                        href="{% url 'admin_game_dashboard' code=game.code %}"
+                        class="btn btn-light"
+                    >
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <aside class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="eyebrow">
+                    Executive Role
+                </div>
+
+                <h2>
+                    Role assignment
+                </h2>
+
+                <p>
+                    Every participant enters the simulation with
+                    responsibility for both commercial and operational
+                    performance.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="grid">
+                <div class="callout">
+                    <strong>
+                        VP of Sales and Operations
+                    </strong>
+
+                    <p>
+                        The participant controls monthly replenishment,
+                        selling prices, maintenance policy, service levels,
+                        inventory exposure, and budget performance.
+                    </p>
+                </div>
+
+                <div class="callout">
+                    <strong>
+                        Rolling-horizon decision making
+                    </strong>
+
+                    <p>
+                        Each month reveals realized demand and a refreshed
+                        forecast for the remaining fiscal-year horizon.
+                    </p>
+                </div>
+
+                <div class="callout">
+                    <strong>
+                        Team identity
+                    </strong>
+
+                    <p>
+                        The optional team name is used to distinguish
+                        executive groups in instructor dashboards and
+                        leaderboard reporting.
+                    </p>
+                </div>
+
+                <div class="callout warning">
+                    <strong>
+                        One role per game
+                    </strong>
+
+                    <p>
+                        A user should not simultaneously act as both
+                        administrator and player in the same simulation.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,2943 @@
+{% extends "simulation/base.html" %}
+
+{% block title %}
+    {{ month_name }} S&amp;OP | {{ game.name }}
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+    /* =============================================================
+       MONTHLY SALES & OPERATIONS PLANNING
+       ============================================================= */
+
+    .monthly-policy-strip {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 22px;
+    }
+
+    .policy-strip-card {
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .policy-strip-card span {
+        display: block;
+        color: rgba(255, 255, 255, 0.50);
+        font-size: 0.58rem;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .policy-strip-card strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--white);
+        font-size: 0.92rem;
+    }
+
+    .decision-progress {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .progress-step {
+        padding: 12px 14px;
+        color: rgba(255, 255, 255, 0.68);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
+    .progress-step strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--white);
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .decision-stack {
+        display: grid;
+        gap: 16px;
+        margin-top: 22px;
+    }
+
+    .decision-module {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .decision-module[open] {
+        box-shadow: var(--shadow-md);
+    }
+
+    .decision-module summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 22px 24px;
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+        background:
+            linear-gradient(
+                180deg,
+                rgba(246, 250, 252, 0.98),
+                rgba(255, 255, 255, 0.92)
+            );
+    }
+
+    .decision-module summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .module-heading {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .module-number {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        color: var(--white);
+        border-radius: 13px;
+        background:
+            linear-gradient(
+                135deg,
+                var(--navy-800),
+                var(--teal-600)
+            );
+        font-size: 0.82rem;
+        font-weight: 900;
+    }
+
+    .module-title {
+        display: block;
+        color: var(--navy-900);
+        font-size: 1.08rem;
+        font-weight: 850;
+    }
+
+    .module-subtitle {
+        display: block;
+        margin-top: 3px;
+        color: var(--slate-500);
+        font-size: 0.75rem;
+    }
+
+    .module-chevron {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--ice-100);
+        transition: transform 0.2s ease;
+    }
+
+    .decision-module[open] .module-chevron {
+        transform: rotate(180deg);
+    }
+
+    .module-body {
+        padding: 24px;
+        border-top: 1px solid var(--border);
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 17px;
+    }
+
+    .product-analysis,
+    .pricing-card,
+    .newsvendor-card {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        background:
+            linear-gradient(
+                145deg,
+                var(--white),
+                var(--ice-50)
+            );
+    }
+
+    .product-analysis h3,
+    .pricing-card h3,
+    .newsvendor-card h3 {
+        margin: 0;
+        color: var(--navy-900);
+        font-size: 1.12rem;
+    }
+
+    .product-code-line {
+        margin-top: 4px;
+        color: var(--slate-500);
+        font-size: 0.72rem;
+    }
+
+
+    /* =============================================================
+       DEMAND
+       ============================================================= */
+
+    .demand-band {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+        margin-top: 17px;
+    }
+
+    .demand-point {
+        padding: 13px 8px;
+        text-align: center;
+        border-radius: 12px;
+        background: var(--ice-100);
+    }
+
+    .demand-point.mean {
+        color: var(--white);
+        background:
+            linear-gradient(
+                135deg,
+                var(--navy-800),
+                var(--teal-600)
+            );
+    }
+
+    .demand-point span {
+        display: block;
+        font-size: 0.58rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .demand-point strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 1.35rem;
+    }
+
+    .range-bar {
+        height: 7px;
+        position: relative;
+        margin: 18px 5px 6px;
+        border-radius: 99px;
+        background:
+            linear-gradient(
+                90deg,
+                var(--gold-500),
+                var(--teal-500)
+            );
+    }
+
+    .range-bar::after {
+        content: "";
+        width: 13px;
+        height: 13px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border: 3px solid var(--white);
+        border-radius: 50%;
+        background: var(--navy-800);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+    }
+
+
+    /* =============================================================
+       LATE-YEAR MARKET INTELLIGENCE
+       ============================================================= */
+
+    .module-alert-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 9px;
+        padding: 5px 9px;
+        color: #7b4a00;
+        border: 1px solid rgba(214, 169, 77, 0.40);
+        border-radius: 999px;
+        background: rgba(255, 239, 194, 0.90);
+        font-size: 0.57rem;
+        font-weight: 950;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        vertical-align: middle;
+        animation: marketPulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes marketPulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(214, 169, 77, 0.00);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(214, 169, 77, 0.10);
+        }
+    }
+
+    .market-intelligence-board {
+        grid-column: 1 / -1;
+        padding: 20px;
+        border: 1px solid rgba(214, 169, 77, 0.32);
+        border-radius: 18px;
+        background:
+            radial-gradient(
+                circle at 92% 0,
+                rgba(214, 169, 77, 0.13),
+                transparent 32%
+            ),
+            linear-gradient(
+                135deg,
+                rgba(255, 249, 232, 0.98),
+                rgba(255, 255, 255, 0.98)
+            );
+        box-shadow: 0 12px 28px rgba(78, 61, 23, 0.08);
+    }
+
+    .market-intelligence-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .market-intelligence-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #7b4a00;
+        font-size: 0.62rem;
+        font-weight: 950;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .market-intelligence-unchanged {
+        padding: 5px 9px;
+        color: var(--slate-600);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255,255,255,.78);
+        font-size: 0.62rem;
+        font-weight: 850;
+    }
+
+    .market-intelligence-board h3 {
+        margin: 9px 0 5px;
+        color: var(--navy-900);
+        font-size: 1.22rem;
+    }
+
+    .market-intelligence-board > p {
+        max-width: 900px;
+        margin: 0;
+        color: var(--slate-600);
+        font-size: 0.80rem;
+        line-height: 1.6;
+    }
+
+    .market-intelligence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .market-intelligence-card {
+        position: relative;
+        overflow: hidden;
+        padding: 17px;
+        border-radius: 15px;
+    }
+
+    .market-intelligence-card.downside {
+        border: 1px solid rgba(177, 91, 71, 0.30);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255, 237, 232, 0.98),
+                rgba(255, 255, 255, 0.98)
+            );
+    }
+
+    .market-intelligence-card.upside {
+        border: 1px solid rgba(24, 170, 163, 0.30);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(225, 248, 244, 0.98),
+                rgba(255, 255, 255, 0.98)
+            );
+    }
+
+    .market-intelligence-product {
+        color: var(--navy-900);
+        font-size: 0.80rem;
+        font-weight: 900;
+    }
+
+    .market-intelligence-impact {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 7px;
+    }
+
+    .market-intelligence-arrow {
+        font-size: 2.2rem;
+        font-weight: 950;
+        line-height: 1;
+    }
+
+    .market-intelligence-card.downside .market-intelligence-arrow,
+    .market-intelligence-card.downside .market-intelligence-impact strong {
+        color: #a54f3c;
+    }
+
+    .market-intelligence-card.upside .market-intelligence-arrow,
+    .market-intelligence-card.upside .market-intelligence-impact strong {
+        color: #0f817b;
+    }
+
+    .market-intelligence-impact strong {
+        font-size: 2.25rem;
+        line-height: 1;
+        letter-spacing: -0.045em;
+    }
+
+    .market-intelligence-direction {
+        margin-top: 4px;
+        color: var(--slate-600);
+        font-size: 0.62rem;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .market-intelligence-card p {
+        margin: 9px 0 0;
+        color: var(--slate-600);
+        font-size: 0.75rem;
+        line-height: 1.55;
+    }
+
+    /* =============================================================
+       COST ANALYSIS
+       ============================================================= */
+
+    .cost-total {
+        padding: 17px;
+        margin-top: 16px;
+        color: var(--white);
+        border-radius: 14px;
+        background:
+            linear-gradient(
+                135deg,
+                var(--navy-900),
+                var(--navy-700)
+            );
+    }
+
+    .cost-total span {
+        display: block;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.63rem;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .cost-total strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 2rem;
+        letter-spacing: -0.04em;
+    }
+
+    .cost-breakdown {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+        margin-top: 11px;
+    }
+
+    .cost-part {
+        padding: 12px;
+        border-radius: 11px;
+        background: var(--ice-100);
+    }
+
+    .cost-part span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.58rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .cost-part strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--navy-900);
+    }
+
+
+    /* =============================================================
+       PRICING
+       ============================================================= */
+
+    .pricing-input-wrap {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(180px, 0.55fr);
+        gap: 16px;
+        align-items: end;
+        margin-top: 16px;
+    }
+
+    .price-status {
+        padding: 13px;
+        border-radius: 12px;
+        background: var(--teal-100);
+    }
+
+    .price-status span {
+        display: block;
+        color: #0b6a66;
+        font-size: 0.59rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .price-status strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--navy-900);
+        font-size: 1.2rem;
+    }
+
+    .pricing-policy-line {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+        margin-top: 12px;
+    }
+
+    .pricing-policy-chip {
+        padding: 11px;
+        border-radius: 11px;
+        background: var(--ice-100);
+    }
+
+    .pricing-policy-chip span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.55rem;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .pricing-policy-chip strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--navy-900);
+    }
+
+    .pricing-output-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 9px;
+        margin-top: 15px;
+    }
+
+    .pricing-output {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: var(--ice-50);
+    }
+
+    .pricing-output span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.57rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .pricing-output strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--navy-900);
+    }
+
+    .credit-hero {
+        padding: 18px;
+        margin-top: 14px;
+        border: 1px solid rgba(24, 170, 163, 0.22);
+        border-radius: 15px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(223, 247, 244, 0.95),
+                rgba(255, 255, 255, 0.98)
+            );
+    }
+
+    .credit-hero-label {
+        color: var(--teal-700);
+        font-size: 0.62rem;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .credit-main {
+        margin-top: 5px;
+        color: var(--navy-900);
+        font-size: 1.85rem;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+    }
+
+    .credit-range {
+        margin-top: 5px;
+        color: var(--slate-600);
+        font-size: 0.76rem;
+    }
+
+
+    /* =============================================================
+       BASE-STOCK / NEWSVENDOR
+       ============================================================= */
+
+    .newsvendor-target {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 16px;
+        margin: 16px 0;
+        color: var(--white);
+        border-radius: 14px;
+        background: var(--navy-900);
+    }
+
+    .newsvendor-target span {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .newsvendor-target strong {
+        font-size: 1.65rem;
+        letter-spacing: -0.04em;
+    }
+
+    .formula-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .formula-chip {
+        padding: 10px;
+        text-align: center;
+        border-radius: 10px;
+        background: var(--ice-100);
+    }
+
+    .formula-chip span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.55rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .formula-chip strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--navy-900);
+    }
+
+    .newsvendor-explanation {
+        margin-top: 14px;
+    }
+
+    .final-submit {
+        margin-top: 20px;
+        padding: 23px;
+        border: 1px solid rgba(24, 170, 163, 0.22);
+        border-radius: 19px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(223, 247, 244, 0.75),
+                rgba(255, 255, 255, 0.98)
+            );
+    }
+
+    @media (max-width: 1000px) {
+        .monthly-policy-strip,
+        .decision-progress,
+        .product-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .pricing-output-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .market-intelligence-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .monthly-policy-strip,
+        .decision-progress,
+        .product-grid,
+        .pricing-input-wrap,
+        .pricing-policy-line,
+        .cost-breakdown,
+        .pricing-output-grid,
+        .formula-strip {
+            grid-template-columns: 1fr;
+        }
+
+        .demand-band {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    /* =============================================================
+       FINAL DECISION CHECKS
+       ============================================================= */
+
+    .decision-checks {
+        margin-top: 16px;
+    }
+
+    .decision-check {
+        display: none;
+        padding: 13px 15px;
+        margin-top: 9px;
+        border-radius: 12px;
+        font-size: 0.76rem;
+        font-weight: 750;
+        line-height: 1.55;
+    }
+
+    .decision-check.visible {
+        display: block;
+    }
+
+    .decision-check.danger {
+        color: #934638;
+        border: 1px solid rgba(177, 91, 71, 0.32);
+        background: rgba(255, 237, 232, 0.94);
+    }
+
+    .decision-check.warning {
+        color: #7b4a00;
+        border: 1px solid rgba(214, 169, 77, 0.34);
+        background: rgba(255, 249, 232, 0.96);
+    }
+
+    .variable-capacity-summary {
+        margin-top: 12px;
+        color: var(--slate-600);
+        font-size: 0.72rem;
+        line-height: 1.55;
+    }
+
+    .btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.52;
+    }
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+
+        <div class="eyebrow">
+            Year {{ scenario_year.year_number }}
+            · {{ month_name }} Sales &amp; Operations Planning
+        </div>
+
+        <h1>
+            Align demand.<br>
+            Make the plan.
+        </h1>
+
+        <p class="hero-copy">
+            Use the latest demand outlook to align pricing,
+            inventory, and replenishment decisions with the
+            commitments established in the Annual Operating Plan.
+        </p>
+
+
+        {# ========================================================= #}
+        {# AOP COMMITMENTS — FED FROM PYTHON                          #}
+        {# ========================================================= #}
+
+        <div class="monthly-policy-strip">
+
+            <div class="policy-strip-card">
+                <span>
+                    Revenue Target
+                </span>
+
+                <strong>
+                    ${{ annual_plan.effective_revenue_target|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="policy-strip-card">
+                <span>
+                    Operating Budget
+                </span>
+
+                <strong>
+                    ${{ annual_plan.effective_operating_budget|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="policy-strip-card">
+                <span>
+                    Sales Credit Policy
+                </span>
+
+                <strong>
+                    {% widthratio annual_plan.sales_credit_rate 1 100 %}%
+                </strong>
+            </div>
+
+            <div class="policy-strip-card">
+                <span>
+                    Annual Credit Target
+                </span>
+
+                <strong>
+                    ${{ annual_plan.sales_credit_target|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="policy-strip-card">
+                <span>
+                    Maintenance
+                </span>
+
+                <strong>
+                    {% if annual_plan.skip_maintenance %}
+                        Deferred
+                    {% else %}
+                        Funded
+                    {% endif %}
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="decision-progress">
+
+            <div class="progress-step">
+                <strong>Step 1</strong>
+                Demand Review
+            </div>
+
+            <div class="progress-step">
+                <strong>Step 2</strong>
+                Supply Economics
+            </div>
+
+            <div class="progress-step">
+                <strong>Step 3</strong>
+                Demand & Pricing
+            </div>
+
+            <div class="progress-step">
+                <strong>Step 4</strong>
+                Supply & Inventory
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<form
+    method="post"
+    id="monthly-decision-form"
+    novalidate
+>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="section-spacer"></div>
+
+        <div class="callout danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <div class="decision-stack">
+
+
+        {# ========================================================= #}
+        {# STEP 1 — DEMAND REVIEW                                    #}
+        {# ========================================================= #}
+
+        <details
+            class="decision-module"
+            open
+        >
+            <summary>
+                <div class="module-heading">
+
+                    <div class="module-number">
+                        01
+                    </div>
+
+                    <div>
+                        <span class="module-title">
+                            Demand Review
+
+                            {% for row in decision_rows %}
+                                {% if row.market_signal_active and forloop.first %}
+                                    <span class="module-alert-badge">
+                                        ● New Market Signal
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+
+                        <span class="module-subtitle">
+                            Start with the latest one-month-ahead
+                            forecast and its ±{{ uncertainty_percent|floatformat:0 }}%
+                            uncertainty interval.
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="module-chevron">
+                    ↓
+                </div>
+            </summary>
+
+            <div class="module-body">
+
+                <div class="product-grid">
+
+                    {% for row in decision_rows %}
+                        {% if row.market_signal_active and forloop.first %}
+                            <section class="market-intelligence-board">
+
+                                <div class="market-intelligence-topline">
+
+                                    <div class="market-intelligence-kicker">
+                                        ⚠ New Market Intelligence · {{ month_name }}
+                                    </div>
+
+                                    <div class="market-intelligence-unchanged">
+                                        Rolling forecast unchanged
+                                    </div>
+
+                                </div>
+
+                                <h3>
+                                    A new late-year demand signal requires management attention.
+                                </h3>
+
+                                <p>
+                                    Recent market intelligence suggests that median demand
+                                    realization may diverge materially from the current rolling
+                                    forecast. This is additional information—not a forecast
+                                    revision. Consider the signal when making pricing and
+                                    replenishment decisions.
+                                </p>
+
+                                <div class="market-intelligence-grid">
+
+                                    {% for signal_row in decision_rows %}
+                                        {% if signal_row.market_signal_active %}
+
+                                            <div
+                                                class="
+                                                    market-intelligence-card
+                                                    {% if signal_row.market_signal_direction == 'LOWER' %}
+                                                        downside
+                                                    {% elif signal_row.market_signal_direction == 'HIGHER' %}
+                                                        upside
+                                                    {% endif %}
+                                                "
+                                            >
+
+                                                <div class="market-intelligence-product">
+                                                    {{ signal_row.product.name }}
+                                                </div>
+
+                                                <div class="market-intelligence-impact">
+
+                                                    <span class="market-intelligence-arrow">
+                                                        {% if signal_row.market_signal_direction == 'LOWER' %}
+                                                            ↓
+                                                        {% else %}
+                                                            ↑
+                                                        {% endif %}
+                                                    </span>
+
+                                                    <strong>
+                                                        {{ signal_row.market_signal_median_shift_percent|floatformat:0 }}%
+                                                    </strong>
+
+                                                </div>
+
+                                                <div class="market-intelligence-direction">
+                                                    {% if signal_row.market_signal_direction == 'LOWER' %}
+                                                        Downside median-demand signal
+                                                    {% else %}
+                                                        Upside median-demand signal
+                                                    {% endif %}
+                                                </div>
+
+                                                <p>
+                                                    {{ signal_row.market_signal_message }}
+                                                </p>
+
+                                            </div>
+
+                                        {% endif %}
+                                    {% endfor %}
+
+                                </div>
+
+                            </section>
+                        {% endif %}
+                    {% endfor %}
+
+
+                    {% for row in decision_rows %}
+
+                        <article class="product-analysis">
+
+                            <h3>
+                                {{ row.product.name }}
+                            </h3>
+
+                            <div class="product-code-line">
+                                Forecast vintage:
+                                {{ previous_base_month_name }}
+                            </div>
+
+                            <div class="demand-band">
+
+                                <div class="demand-point">
+                                    <span>
+                                        Low · −{{ uncertainty_percent|floatformat:0 }}%
+                                    </span>
+
+                                    <strong>
+                                        {{ row.forecast_low }}
+                                    </strong>
+                                </div>
+
+                                <div class="demand-point mean">
+                                    <span>
+                                        Expected Demand
+                                    </span>
+
+                                    <strong>
+                                        {{ row.forecast_mean }}
+                                    </strong>
+                                </div>
+
+                                <div class="demand-point">
+                                    <span>
+                                        High · +{{ uncertainty_percent|floatformat:0 }}%
+                                    </span>
+
+                                    <strong>
+                                        {{ row.forecast_high }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                            <div class="range-bar"></div>
+
+                            <div
+                                class="callout"
+                                style="margin-top:14px;"
+                            >
+                                <strong>
+                                    Beginning inventory:
+                                    {{ row.beginning_inventory_units }}
+                                    units
+                                </strong>
+
+                                <p>
+                                    {% if is_year_2 %}
+                                        Demand uncertainty is materially wider
+                                        than in Year 1. Use the full range when
+                                        deciding how much inventory exposure you
+                                        are willing to carry.
+                                    {% else %}
+                                        Your base-stock decision should
+                                        recognize the complete uncertainty
+                                        interval rather than simply matching
+                                        expected demand.
+                                    {% endif %}
+                                </p>
+                            </div>
+
+                            {% if annual_plan.skip_maintenance %}
+                                <div
+                                    class="callout danger"
+                                    style="margin-top:12px;"
+                                >
+                                    <strong>
+                                        Maintenance consequence already applied
+                                    </strong>
+
+                                    <p>
+                                        The demand outlook shown above
+                                        incorporates the 20% operating-quality
+                                        penalty from deferred maintenance.
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                        </article>
+
+                    {% empty %}
+
+                        <div class="empty-state">
+                            <h3>
+                                Demand outlook unavailable
+                            </h3>
+
+                            <p>
+                                No planning rows were generated for
+                                {{ month_name }}.
+                            </p>
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                {% if is_year_2 %}
+                    <div
+                        class="callout warning"
+                        style="margin-top:16px;"
+                    >
+                        <strong>
+                            Year 2 planning environment
+                        </strong>
+
+                        <p>
+                            One-month demand is modeled as uniform within
+                            ±{{ uncertainty_percent|floatformat:0 }}% of the
+                            current mean forecast. The wider range makes
+                            both shortage risk and excess-inventory risk
+                            more consequential than in Year 1. Any late-year
+                            market-intelligence alert is additional information;
+                            it does not revise the rolling forecast.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </details>
+
+
+        {# ========================================================= #}
+        {# STEP 2 — SUPPLY ECONOMICS                                 #}
+        {# ========================================================= #}
+
+        <details class="decision-module">
+
+            <summary>
+                <div class="module-heading">
+
+                    <div class="module-number">
+                        02
+                    </div>
+
+                    <div>
+                        <span class="module-title">
+                            Supply Economics
+                        </span>
+
+                        <span class="module-subtitle">
+                            Understand total production economics
+                            before making pricing decisions.
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="module-chevron">
+                    ↓
+                </div>
+            </summary>
+
+            <div class="module-body">
+
+                <div class="product-grid">
+
+                    {% for row in decision_rows %}
+
+                        <article class="product-analysis">
+
+                            <h3>
+                                {{ row.product.name }}
+                            </h3>
+
+                            <div class="cost-total">
+
+                                <span>
+                                    Total Production Cost / Unit
+                                </span>
+
+                                <strong>
+                                    ${{ row.total_unit_cost|floatformat:2 }}
+                                </strong>
+
+                            </div>
+
+                            <div class="cost-breakdown">
+
+                                <div class="cost-part">
+                                    <span>
+                                        Variable
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.variable_unit_cost|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="cost-part">
+                                    <span>
+                                        Labor Fixed
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.labor_unit_cost|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="cost-part">
+                                    <span>
+                                        Maintenance Fixed
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.maintenance_unit_cost|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                            <div
+                                class="callout"
+                                style="margin-top:14px;"
+                            >
+                                <strong>
+                                    Different costs answer different questions
+                                </strong>
+
+                                <p>
+                                    Total production cost matters for
+                                    profitability. The base-stock decision,
+                                    however, uses variable production cost
+                                    because that is the incremental capital
+                                    exposed when additional inventory is created.
+                                </p>
+                            </div>
+
+                            {% if annual_plan.skip_maintenance %}
+                                <div
+                                    class="callout danger"
+                                    style="margin-top:14px;"
+                                >
+                                    <strong>
+                                        Maintenance deferred
+                                    </strong>
+
+                                    <p>
+                                        Maintenance allocation is currently
+                                        $0 per unit, but effective market demand
+                                        is reduced by 20%.
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+        </details>
+
+
+        {# ========================================================= #}
+        {# STEP 3 — DEMAND & PRICING                                 #}
+        {# ========================================================= #}
+
+        <details class="decision-module">
+
+            <summary>
+                <div class="module-heading">
+
+                    <div class="module-number">
+                        03
+                    </div>
+
+                    <div>
+                        <span class="module-title">
+                            Demand & Pricing
+                        </span>
+
+                        <span class="module-subtitle">
+                            {% if is_year_2 %}
+                                Balance sales credit, demand response,
+                                and inventory liquidation before committing price.
+                            {% else %}
+                                Evaluate demand elasticity and expected
+                                sales credit before committing the price.
+                            {% endif %}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="module-chevron">
+                    ↓
+                </div>
+            </summary>
+
+            <div class="module-body">
+
+                <div class="product-grid">
+
+                    {% for row in decision_rows %}
+
+                        <article
+                            class="pricing-card pricing-controller"
+                            data-product="{{ row.product.id }}"
+                            data-standard-price="{{ row.standard_price }}"
+                            data-min-price="{{ row.minimum_price }}"
+                            data-credit-rate="{{ row.sales_credit_rate }}"
+                            data-forecast="{{ row.forecast_units }}"
+                            data-beginning-inventory="{{ row.beginning_inventory_units }}"
+                            data-uncertainty-rate="{{ uncertainty_rate }}"
+                            data-is-year-2="{% if is_year_2 %}true{% else %}false{% endif %}"
+                            data-operating-multiplier="{{ annual_plan.quality_capacity_multiplier }}"
+                        >
+
+                            <h3>
+                                {{ row.product.name }}
+                            </h3>
+
+                            <div class="pricing-input-wrap">
+
+                                <div class="form-field">
+                                    {{ row.price_field.label_tag }}
+                                    {{ row.price_field }}
+                                    {{ row.price_field.errors }}
+                                </div>
+
+                                <div class="price-status">
+                                    <span>
+                                        Standard Price
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.standard_price|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="pricing-policy-line">
+
+                                <div class="pricing-policy-chip">
+                                    <span>
+                                        Annual Policy
+                                    </span>
+
+                                    <strong>
+                                        {{ row.sales_credit_rate_percent|floatformat:0 }}%
+                                    </strong>
+                                </div>
+
+                                <div class="pricing-policy-chip">
+                                    <span>
+                                        Minimum Price
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.minimum_price|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="pricing-policy-chip">
+                                    <span>
+                                        Max Credit / Unit
+                                    </span>
+
+                                    <strong>
+                                        ${{ row.initial_sales_credit_per_unit|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="pricing-output-grid">
+
+                                <div class="pricing-output">
+                                    <span>
+                                        Expected Demand
+                                    </span>
+
+                                    <strong
+                                        data-output="mean-demand"
+                                    >
+                                        {{ row.forecast_mean }}
+                                    </strong>
+                                </div>
+
+                                <div class="pricing-output">
+                                    <span>
+                                        Demand Range
+                                    </span>
+
+                                    <strong
+                                        data-output="demand-range"
+                                    >
+                                        {{ row.forecast_low }}
+                                        –
+                                        {{ row.forecast_high }}
+                                    </strong>
+                                </div>
+
+                                <div class="pricing-output">
+                                    <span>
+                                        Credit / Unit
+                                    </span>
+
+                                    <strong
+                                        data-output="unit-credit"
+                                    >
+                                        ${{ row.initial_sales_credit_per_unit|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="pricing-output">
+                                    <span>
+                                        Price Effect
+                                    </span>
+
+                                    <strong
+                                        data-output="price-effect"
+                                    >
+                                        Baseline
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="credit-hero">
+
+                                <div class="credit-hero-label">
+                                    Expected Sales Credit Collected
+                                </div>
+
+                                <div
+                                    class="credit-main"
+                                    data-output="credit-mean"
+                                >
+                                    ${{ row.initial_expected_sales_credit|floatformat:0 }}
+                                </div>
+
+                                <div
+                                    class="credit-range"
+                                    data-output="credit-range"
+                                >
+                                    Expected range:
+                                    ${{ row.initial_expected_sales_credit_low|floatformat:0 }}
+                                    –
+                                    ${{ row.initial_expected_sales_credit_high|floatformat:0 }}
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                class="callout"
+                                style="margin-top:14px;"
+                            >
+                                <strong
+                                    data-output="pricing-advice"
+                                >
+                                    Standard-price benchmark
+                                </strong>
+
+                                <p>
+                                    Under the
+                                    {{ row.sales_credit_rate_percent|floatformat:0 }}%
+                                    annual policy, the maximum sales credit
+                                    per unit is
+                                    ${{ row.initial_sales_credit_per_unit|floatformat:2 }}.
+                                    The demand response is symmetric:
+                                    every 1% price reduction increases demand
+                                    by 2%, while every 1% price increase reduces
+                                    demand by 2%. Sales-credit effects remain
+                                    governed by the annual commercial policy.
+                                </p>
+                            </div>
+
+                            {% if is_year_2 %}
+                                <div
+                                    class="callout
+                                    {% if row.strong_liquidation_candidate %}
+                                        danger
+                                    {% endif %}"
+                                    style="margin-top:12px;"
+                                >
+                                    <strong
+                                        data-output="inventory-pricing-advice"
+                                    >
+                                        {% if row.strong_liquidation_candidate %}
+                                            Excess inventory: liquidation deserves priority
+                                        {% elif row.liquidation_candidate %}
+                                            Consider inventory liquidation
+                                        {% else %}
+                                            Inventory position is currently balanced
+                                        {% endif %}
+                                    </strong>
+
+                                    <p data-output="inventory-pricing-copy">
+                                        {% if row.strong_liquidation_candidate %}
+                                            Beginning inventory already exceeds the
+                                            upper demand outlook. Maximizing expected
+                                            sales credit should not be treated as the
+                                            only pricing objective; discounting can be
+                                            strategically useful to reduce inventory exposure.
+                                        {% elif row.liquidation_candidate %}
+                                            Beginning inventory exceeds expected demand.
+                                            A lower price may be justified if reducing
+                                            inventory exposure is more valuable than
+                                            preserving maximum sales credit.
+                                        {% else %}
+                                            There is no major excess-inventory signal
+                                            at the start of this month. Pricing can remain
+                                            focused primarily on commercial performance.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+        </details>
+
+
+        {# ========================================================= #}
+        {# STEP 4 — SUPPLY & INVENTORY                               #}
+        {# ========================================================= #}
+
+        <details class="decision-module">
+
+            <summary>
+                <div class="module-heading">
+
+                    <div class="module-number">
+                        04
+                    </div>
+
+                    <div>
+                        <span class="module-title">
+                            Supply & Inventory
+                        </span>
+
+                        <span class="module-subtitle">
+                            {% if is_year_2 %}
+                                Apply the critical ratio and demand range
+                                yourself to determine replenishment.
+                            {% else %}
+                                Use variable-cost base-stock economics
+                                to determine your final inventory decision.
+                            {% endif %}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="module-chevron">
+                    ↓
+                </div>
+            </summary>
+
+            <div class="module-body">
+
+                <div class="product-grid">
+
+                    {% for row in decision_rows %}
+
+                        <article
+                            class="newsvendor-card replenishment-controller"
+                            data-product="{{ row.product.id }}"
+                            data-standard-price="{{ row.standard_price }}"
+                            data-forecast="{{ row.forecast_units }}"
+                            data-beginning="{{ row.beginning_inventory_units }}"
+                            data-variable-cost="{{ row.variable_unit_cost }}"
+                            data-interest-rate="{{ scenario_year.monthly_interest_rate }}"
+                            data-uncertainty-rate="{{ uncertainty_rate }}"
+                            data-show-guidance="{% if show_replenishment_guidance %}true{% else %}false{% endif %}"
+                            data-operating-multiplier="{{ annual_plan.quality_capacity_multiplier }}"
+                            data-is-terminal-month="{% if row.is_terminal_month %}true{% else %}false{% endif %}"
+                        >
+
+                            <h3>
+                                {{ row.product.name }}
+                            </h3>
+
+
+                            {% if show_replenishment_guidance %}
+                                <div class="newsvendor-target">
+
+                                    <div>
+                                        <span>
+                                            Base-Stock Inventory Target (Standard Price Only: Recalculate when price is changed)
+                                        </span>
+                                    </div>
+
+                                    <strong
+                                        data-output="newsvendor-target"
+                                    >
+                                        {{ row.newsvendor_target_units }}
+                                    </strong>
+
+                                </div>
+                            {% else %}
+                                <div class="callout" style="margin-top:16px;">
+                                    <strong>
+                                        Year 2: you determine the target
+                                    </strong>
+
+                                    <p>
+                                        The system provides the demand range,
+                                        variable-cost economics, and critical ratio.
+                                        It deliberately does not calculate the
+                                        base-stock target for you.
+                                    </p>
+                                </div>
+                            {% endif %}
+
+
+                            <div class="formula-strip">
+
+                                <div class="formula-chip">
+                                    <span>
+                                        Underage Cost
+                                    </span>
+
+                                    <strong
+                                        data-output="underage-cost"
+                                    >
+                                        ${{ row.underage_cost|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="formula-chip">
+                                    <span>
+                                        Overage Cost
+                                    </span>
+
+                                    <strong
+                                        data-output="overage-cost"
+                                    >
+                                        ${{ row.overage_cost|floatformat:2 }}
+                                    </strong>
+                                </div>
+
+                                <div class="formula-chip">
+                                    <span>
+                                        Critical Ratio
+                                    </span>
+
+                                    <strong
+                                        data-output="critical-ratio"
+                                    >
+                                        {{ row.critical_ratio_percent|floatformat:2 }}%
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="formula-strip">
+
+                                <div class="formula-chip">
+                                    <span>
+                                        Beginning Inventory
+                                    </span>
+
+                                    <strong>
+                                        {{ row.beginning_inventory_units }}
+                                    </strong>
+                                </div>
+
+                                <div class="formula-chip">
+                                    <span>
+                                        Demand Range
+                                    </span>
+
+                                    <strong
+                                        data-output="replenishment-demand-range"
+                                    >
+                                        {{ row.forecast_low }}
+                                        –
+                                        {{ row.forecast_high }}
+                                    </strong>
+                                </div>
+
+                                <div class="formula-chip">
+                                    <span>
+                                        {% if show_replenishment_guidance %}
+                                            Suggested New Units
+                                        {% else %}
+                                            Your Task
+                                        {% endif %}
+                                    </span>
+
+                                    <strong
+                                        {% if show_replenishment_guidance %}
+                                            data-output="recommended-replenishment"
+                                        {% endif %}
+                                    >
+                                        {% if show_replenishment_guidance %}
+                                            {{ row.recommended_replenishment_units }}
+                                        {% else %}
+                                            Calculate independently
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="callout newsvendor-explanation">
+
+                                <strong>
+                                    Base-stock logic
+                                </strong>
+
+                                <p>
+                                    Underage cost =
+                                    Selling Price − Variable Cost.
+
+                                    {% if row.is_terminal_month %}
+                                        Because August is the final fiscal month
+                                        and remaining bikes have zero salvage value,
+                                        overage cost = Variable Cost.
+                                        Therefore the August critical ratio is
+                                        (Selling Price − Variable Cost) ÷ Selling Price.
+                                    {% else %}
+                                        Overage cost =
+                                        Variable Cost × Monthly Interest Rate.
+                                        Critical ratio =
+                                        Underage ÷ (Underage + Overage).
+                                    {% endif %}
+
+                                    Fixed production costs are excluded.
+
+                                    {% if is_year_2 %}
+                                        Use that ratio within the displayed
+                                        uniform demand range to determine your
+                                        own base-stock level.
+                                    {% endif %}
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                class="form-field"
+                                style="margin-top:17px;"
+                            >
+                                {{ row.replenishment_field.label_tag }}
+
+                                {{ row.replenishment_field }}
+
+                                {{ row.replenishment_field.errors }}
+
+                                <small>
+                                    {% if show_replenishment_guidance %}
+                                        This is your final replenishment decision.
+                                        The displayed base-stock target and recommended
+                                        replenishment are calculated from the standard-price
+                                        baseline and remain fixed even if you change price.
+                                        They are decision support, not mandatory quantities.
+                                    {% else %}
+                                        This is your final replenishment decision.
+                                        Year 2 intentionally provides no recommended
+                                        quantity; enter the amount implied by your
+                                        own inventory analysis.
+                                    {% endif %}
+                                </small>
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <div
+                    class="final-submit"
+                    id="final-submit-panel"
+                    data-remaining-variable-cost="{{ remaining_allowed_replenishment_spend }}"
+                    data-ordering-blocked="{% if ordering_blocked %}true{% else %}false{% endif %}"
+                >
+
+                    <div class="eyebrow">
+                        Complete Monthly S&amp;OP
+                    </div>
+
+                    <h3
+                        style="
+                            margin:0;
+                            color:var(--navy-900);
+                            font-size:1.3rem;
+                        "
+                    >
+                        Ready to complete {{ month_name }} S&amp;OP?
+                    </h3>
+
+                    <p class="muted">
+                        Once submitted, realized demand is revealed
+                        and this month’s pricing, inventory, and
+                        replenishment decisions become final.
+                    </p>
+
+                    <div class="decision-checks">
+
+                        <div
+                            class="decision-check danger"
+                            id="price-limit-warning"
+                            aria-live="polite"
+                        ></div>
+
+                        <div
+                            class="decision-check danger"
+                            id="variable-cost-warning"
+                            aria-live="polite"
+                        ></div>
+
+                        <div class="variable-capacity-summary">
+                            Annual budget allocated to variable production cost:
+                            <strong>
+                                ${{ annual_variable_cost_budget|floatformat:0 }}
+                            </strong>
+                            · Maximum accumulated order value (180% of variable-cost budget):
+                            <strong>
+                                ${{ variable_cost_spend_ceiling|floatformat:0 }}
+                            </strong>
+                            · Accumulated order value through prior month:
+                            <strong>
+                                ${{ cumulative_variable_production_cost|floatformat:0 }}
+                            </strong>
+                            · Remaining order capacity:
+                            <strong>
+                                ${{ remaining_allowed_replenishment_spend|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <div class="button-row">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="finalize-month-button"
+                        >
+                            Finalize {{ month_name }} S&amp;OP
+                        </button>
+
+                        <a
+                            href="{% url 'game_dashboard' code=game.code %}"
+                            class="btn btn-light"
+                        >
+                            Return to Dashboard
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </details>
+
+    </div>
+</form>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        /* =========================================================
+           DISPLAY HELPERS
+           ========================================================= */
+
+        function money(
+            value,
+            decimals = 0
+        ) {
+            return new Intl.NumberFormat(
+                "en-US",
+                {
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                }
+            ).format(value);
+        }
+
+
+        function units(value) {
+            return Math.max(
+                0,
+                Math.round(value)
+            );
+        }
+
+
+        function safeOutput(
+            card,
+            selector,
+            value
+        ) {
+            if (!card) {
+                return;
+            }
+
+            const element =
+                card.querySelector(
+                    selector
+                );
+
+            if (element) {
+                element.textContent =
+                    value;
+            }
+        }
+
+
+        /* =========================================================
+           DEMAND ELASTICITY
+           Mirrors services.py demand_multiplier()
+           ========================================================= */
+
+        function demandMultiplier(
+            price,
+            standardPrice
+        ) {
+            if (
+                !Number.isFinite(price)
+                || !Number.isFinite(standardPrice)
+                || standardPrice <= 0
+            ) {
+                return 1;
+            }
+
+            /*
+             * Symmetric elasticity:
+             *
+             * 1% price change
+             * -> 2% demand change
+             *    in the opposite direction.
+             *
+             * Examples:
+             * 5% discount -> demand +10%
+             * 5% premium  -> demand -10%
+             */
+            const priceChangeRate =
+                (
+                    price
+                    - standardPrice
+                )
+                / standardPrice;
+
+            return Math.max(
+                0,
+                1
+                - 2
+                * priceChangeRate
+            );
+        }
+
+
+        /* =========================================================
+           SALES CREDIT
+           Mirrors services.py sales_credit_per_unit()
+
+           IMPORTANT:
+           The annual policy comes from Python.
+           Nothing is hard-coded to 20%.
+           ========================================================= */
+
+        function salesCreditPerUnit(
+            price,
+            standardPrice,
+            salesCreditRate
+        ) {
+            if (
+                !Number.isFinite(price)
+                || !Number.isFinite(standardPrice)
+                || !Number.isFinite(salesCreditRate)
+            ) {
+                return 0;
+            }
+
+            const maximumCredit =
+                standardPrice
+                * salesCreditRate;
+
+            const minimumPrice =
+                standardPrice
+                - maximumCredit;
+
+            /*
+             * Commercial rule:
+             *
+             * Sales Credit / Unit
+             * = max(0, Selling Price - Minimum Price)
+             *
+             * Credit therefore continues to increase when selling
+             * price rises above the standard price.
+             */
+            return Math.max(
+                0,
+                price - minimumPrice
+            );
+        }
+
+
+        /* =========================================================
+           PRODUCT RECALCULATION
+           ========================================================= */
+
+        function calculateProduct(
+            productId
+        ) {
+
+            const pricingCard =
+                document.querySelector(
+                    `.pricing-controller[data-product="${productId}"]`
+                );
+
+            const replenishmentCard =
+                document.querySelector(
+                    `.replenishment-controller[data-product="${productId}"]`
+                );
+
+            if (
+                !pricingCard
+                || !replenishmentCard
+            ) {
+                return;
+            }
+
+
+            /* -----------------------------------------------------
+               SERVER-FED PARAMETERS
+               ----------------------------------------------------- */
+
+            const standardPrice =
+                Number(
+                    pricingCard.dataset.standardPrice
+                );
+
+            const minimumPrice =
+                Number(
+                    pricingCard.dataset.minPrice
+                );
+
+            const salesCreditRate =
+                Number(
+                    pricingCard.dataset.creditRate
+                );
+
+            const forecast =
+                Number(
+                    pricingCard.dataset.forecast
+                );
+
+            const uncertaintyRate =
+                Number(
+                    pricingCard.dataset.uncertaintyRate
+                );
+
+            const isYear2 =
+                String(
+                    pricingCard.dataset.isYear2
+                ).toLowerCase()
+                === "true";
+
+            const pricingBeginningInventory =
+                Number(
+                    pricingCard.dataset.beginningInventory
+                );
+
+            const operatingMultiplier =
+                Number(
+                    pricingCard.dataset.operatingMultiplier
+                );
+
+            const beginningInventory =
+                Number(
+                    replenishmentCard.dataset.beginning
+                );
+
+            const variableUnitCost =
+                Number(
+                    replenishmentCard.dataset.variableCost
+                );
+
+            const monthlyInterestRate =
+                Number(
+                    replenishmentCard.dataset.interestRate
+                );
+
+            const showGuidance =
+                String(
+                    replenishmentCard.dataset.showGuidance
+                ).toLowerCase()
+                === "true";
+
+            const isTerminalMonth =
+                String(
+                    replenishmentCard.dataset.isTerminalMonth
+                ).toLowerCase()
+                === "true";
+
+
+            if (
+                !Number.isFinite(standardPrice)
+                || !Number.isFinite(minimumPrice)
+                || !Number.isFinite(salesCreditRate)
+                || !Number.isFinite(forecast)
+                || !Number.isFinite(uncertaintyRate)
+                || !Number.isFinite(operatingMultiplier)
+                || !Number.isFinite(beginningInventory)
+                || !Number.isFinite(variableUnitCost)
+                || !Number.isFinite(monthlyInterestRate)
+            ) {
+                console.warn(
+                    "Planning data is incomplete for product",
+                    productId
+                );
+
+                return;
+            }
+
+
+            const priceInput =
+                pricingCard.querySelector(
+                    'input[type="number"]'
+                );
+
+            if (!priceInput) {
+                return;
+            }
+
+
+            const enteredPrice =
+                Number(
+                    priceInput.value
+                );
+
+            const price =
+                Number.isFinite(
+                    enteredPrice
+                )
+                    ? enteredPrice
+                    : standardPrice;
+
+
+            /* -----------------------------------------------------
+               PRICE / DEMAND
+               ----------------------------------------------------- */
+
+            const elasticity =
+                demandMultiplier(
+                    price,
+                    standardPrice
+                );
+
+            const meanDemand =
+                forecast
+                * operatingMultiplier
+                * elasticity;
+
+            const lowDemand =
+                meanDemand
+                * (
+                    1
+                    - uncertaintyRate
+                );
+
+            const highDemand =
+                meanDemand
+                * (
+                    1
+                    + uncertaintyRate
+                );
+
+
+            const roundedLowDemand =
+                units(
+                    lowDemand
+                );
+
+            const roundedMeanDemand =
+                units(
+                    meanDemand
+                );
+
+            const roundedHighDemand =
+                units(
+                    highDemand
+                );
+
+
+            /* -----------------------------------------------------
+               SALES CREDIT
+               ----------------------------------------------------- */
+
+            const creditPerUnit =
+                salesCreditPerUnit(
+                    price,
+                    standardPrice,
+                    salesCreditRate
+                );
+
+            const creditLow =
+                roundedLowDemand
+                * creditPerUnit;
+
+            const creditMean =
+                roundedMeanDemand
+                * creditPerUnit;
+
+            const creditHigh =
+                roundedHighDemand
+                * creditPerUnit;
+
+
+            /* -----------------------------------------------------
+               VARIABLE-COST BASE-STOCK ECONOMICS
+
+               September-July:
+                   Cu = price - variable cost
+                   Co = variable cost × monthly interest
+                   CR = Cu / (Cu + Co)
+
+               August / terminal month:
+                   Unsold inventory has zero salvage value.
+
+                   Cu = price - variable cost
+                   Co = variable cost
+                   CR = (price - variable cost) / price
+
+               This mirrors services.py newsvendor_inventory_target().
+               ----------------------------------------------------- */
+
+            const underageCost =
+                Math.max(
+                    0,
+                    price
+                    - variableUnitCost
+                );
+
+            const overageCost =
+                isTerminalMonth
+                    ? Math.max(
+                        0,
+                        variableUnitCost
+                    )
+                    : Math.max(
+                        0,
+                        variableUnitCost
+                        * monthlyInterestRate
+                    );
+
+            const denominator =
+                underageCost
+                + overageCost;
+
+            const criticalRatio =
+                denominator > 0
+                    ? (
+                        underageCost
+                        / denominator
+                    )
+                    : 0.50;
+
+
+            /* -----------------------------------------------------
+               UNIFORM DISTRIBUTION BASE-STOCK TARGET
+
+               Q* =
+                   Low
+                   + CR × (High - Low)
+               ----------------------------------------------------- */
+
+            const targetInventory =
+                units(
+                    lowDemand
+                    + criticalRatio
+                    * (
+                        highDemand
+                        - lowDemand
+                    )
+                );
+
+            const recommendedReplenishment =
+                Math.max(
+                    0,
+                    targetInventory
+                    - beginningInventory
+                );
+
+
+            /* -----------------------------------------------------
+               PRICING OUTPUT
+               ----------------------------------------------------- */
+
+            safeOutput(
+                pricingCard,
+                '[data-output="mean-demand"]',
+                roundedMeanDemand
+            );
+
+            safeOutput(
+                pricingCard,
+                '[data-output="demand-range"]',
+                (
+                    `${roundedLowDemand}`
+                    + ` – `
+                    + `${roundedHighDemand}`
+                )
+            );
+
+            safeOutput(
+                pricingCard,
+                '[data-output="unit-credit"]',
+                money(
+                    creditPerUnit,
+                    2
+                )
+            );
+
+            safeOutput(
+                pricingCard,
+                '[data-output="credit-mean"]',
+                money(
+                    creditMean,
+                    0
+                )
+            );
+
+            safeOutput(
+                pricingCard,
+                '[data-output="credit-range"]',
+                (
+                    `Expected range: `
+                    + `${money(creditLow, 0)}`
+                    + ` – `
+                    + `${money(creditHigh, 0)}`
+                )
+            );
+
+
+            const priceEffect =
+                pricingCard.querySelector(
+                    '[data-output="price-effect"]'
+                );
+
+            if (priceEffect) {
+
+                if (
+                    price < standardPrice
+                ) {
+                    priceEffect.textContent =
+                        `Demand +${Math.round(
+                            (
+                                elasticity
+                                - 1
+                            )
+                            * 100
+                        )}%`;
+
+                } else if (
+                    price > standardPrice
+                ) {
+                    priceEffect.textContent =
+                        `Demand ${Math.round(
+                            (
+                                elasticity
+                                - 1
+                            )
+                            * 100
+                        )}%`;
+
+                } else {
+                    priceEffect.textContent =
+                        "Baseline";
+                }
+            }
+
+
+            const advice =
+                pricingCard.querySelector(
+                    '[data-output="pricing-advice"]'
+                );
+
+            if (advice) {
+
+                if (
+                    price < minimumPrice
+                ) {
+                    advice.textContent =
+                        `Below authorized price floor`;
+
+                } else if (
+                    price === standardPrice
+                ) {
+                    advice.textContent =
+                        "Maximum sales-credit benchmark";
+
+                } else if (
+                    price < standardPrice
+                ) {
+                    advice.textContent =
+                        "Discount trades sales credit for demand";
+
+                } else {
+                    advice.textContent =
+                        "Premium pricing reduces expected demand";
+                }
+            }
+
+
+            if (
+                isYear2
+                && Number.isFinite(
+                    pricingBeginningInventory
+                )
+            ) {
+                const inventoryAdvice =
+                    pricingCard.querySelector(
+                        '[data-output="inventory-pricing-advice"]'
+                    );
+
+                const inventoryCopy =
+                    pricingCard.querySelector(
+                        '[data-output="inventory-pricing-copy"]'
+                    );
+
+                if (
+                    inventoryAdvice
+                    && inventoryCopy
+                ) {
+                    if (
+                        pricingBeginningInventory
+                        > roundedHighDemand
+                    ) {
+                        inventoryAdvice.textContent =
+                            "Strong liquidation case";
+
+                        inventoryCopy.textContent =
+                            (
+                                "Beginning inventory exceeds the current "
+                                + "upper demand outlook. A discount can be "
+                                + "strategically justified to stimulate "
+                                + "demand and reduce inventory exposure."
+                            );
+
+                    } else if (
+                        pricingBeginningInventory
+                        > roundedMeanDemand
+                    ) {
+                        inventoryAdvice.textContent =
+                            "Consider inventory liquidation";
+
+                        inventoryCopy.textContent =
+                            (
+                                "Beginning inventory is above expected "
+                                + "demand. Compare the value of preserving "
+                                + "sales credit with the benefit of reducing "
+                                + "inventory exposure."
+                            );
+
+                    } else {
+                        inventoryAdvice.textContent =
+                            "Inventory position is currently balanced";
+
+                        inventoryCopy.textContent =
+                            (
+                                "Beginning inventory does not currently "
+                                + "signal major excess stock. Commercial "
+                                + "pricing objectives can remain the primary "
+                                + "focus."
+                            );
+                    }
+                }
+            }
+
+
+            /* -----------------------------------------------------
+               REPLENISHMENT OUTPUT
+               ----------------------------------------------------- */
+
+            /*
+             * Year 1:
+             * Keep the Python-rendered standard-price baseline
+             * base-stock target and replenishment recommendation fixed.
+             * Changing price must NOT rewrite inventory guidance.
+             *
+             * Year 2+:
+             * No base-stock / replenishment recommendation is shown.
+             * We may still update the decision-support economics.
+             */
+            if (!showGuidance) {
+
+                safeOutput(
+                    replenishmentCard,
+                    '[data-output="underage-cost"]',
+                    money(
+                        underageCost,
+                        2
+                    )
+                );
+
+                safeOutput(
+                    replenishmentCard,
+                    '[data-output="overage-cost"]',
+                    money(
+                        overageCost,
+                        2
+                    )
+                );
+
+                safeOutput(
+                    replenishmentCard,
+                    '[data-output="critical-ratio"]',
+                    `${(
+                        criticalRatio
+                        * 100
+                    ).toFixed(2)}%`
+                );
+
+                safeOutput(
+                    replenishmentCard,
+                    '[data-output="replenishment-demand-range"]',
+                    (
+                        `${roundedLowDemand}`
+                        + ` – `
+                        + `${roundedHighDemand}`
+                    )
+                );
+            }
+        }
+
+
+
+        /* =========================================================
+           FINAL DECISION VALIDATION
+           ========================================================= */
+
+        const finalizeButton =
+            document.getElementById(
+                "finalize-month-button"
+            );
+
+        const finalSubmitPanel =
+            document.getElementById(
+                "final-submit-panel"
+            );
+
+        const priceLimitWarning =
+            document.getElementById(
+                "price-limit-warning"
+            );
+
+        const variableCostWarning =
+            document.getElementById(
+                "variable-cost-warning"
+            );
+
+
+        function proposedVariableProductionCost() {
+
+            let total = 0;
+
+            document
+                .querySelectorAll(
+                    ".replenishment-controller"
+                )
+                .forEach(
+                    function (card) {
+
+                        const variableCost =
+                            Number(
+                                card.dataset.variableCost
+                            );
+
+                        const quantityInput =
+                            card.querySelector(
+                                'input[type="number"]'
+                            );
+
+                        if (
+                            !quantityInput
+                            || !Number.isFinite(variableCost)
+                        ) {
+                            return;
+                        }
+
+                        const quantity =
+                            Number(
+                                quantityInput.value
+                            );
+
+                        if (
+                            Number.isFinite(quantity)
+                            && quantity > 0
+                        ) {
+                            total +=
+                                quantity
+                                * variableCost;
+                        }
+                    }
+                );
+
+            return total;
+        }
+
+
+        function validatePriceLimits() {
+
+            const violations = [];
+
+            document
+                .querySelectorAll(
+                    ".pricing-controller"
+                )
+                .forEach(
+                    function (card) {
+
+                        const productName =
+                            card.querySelector("h3")
+                            ? card.querySelector("h3").textContent.trim()
+                            : "Product";
+
+                        const priceInput =
+                            card.querySelector(
+                                'input[type="number"]'
+                            );
+
+                        if (!priceInput) {
+                            return;
+                        }
+
+                        const price =
+                            Number(
+                                priceInput.value
+                            );
+
+                        const maximumPrice =
+                            Number(
+                                priceInput.dataset.maximumPrice
+                                || priceInput.max
+                            );
+
+                        if (
+                            Number.isFinite(price)
+                            && Number.isFinite(maximumPrice)
+                            && price > maximumPrice
+                        ) {
+                            violations.push(
+                                (
+                                    productName
+                                    + ": proposed price "
+                                    + money(price, 2)
+                                    + " exceeds the feasible maximum of "
+                                    + money(maximumPrice, 2)
+                                    + ". At the maximum price, modeled demand "
+                                    + "reaches zero."
+                                )
+                            );
+                        }
+                    }
+                );
+
+            if (violations.length > 0) {
+                priceLimitWarning.textContent =
+                    (
+                        "Price limit: "
+                        + violations.join(" ")
+                        + " Reduce the price before finalizing the monthly S&OP plan."
+                    );
+
+                priceLimitWarning.classList.add(
+                    "visible"
+                );
+
+                return false;
+            }
+
+            priceLimitWarning.textContent = "";
+            priceLimitWarning.classList.remove(
+                "visible"
+            );
+
+            return true;
+        }
+
+
+        function validateVariableCostCapacity() {
+
+            if (!finalSubmitPanel) {
+                return true;
+            }
+
+            const remainingCapacity =
+                Number(
+                    finalSubmitPanel
+                        .dataset
+                        .remainingVariableCost
+                );
+
+            const orderingBlocked =
+                String(
+                    finalSubmitPanel
+                        .dataset
+                        .orderingBlocked
+                ).toLowerCase()
+                === "true";
+
+            const proposedCost =
+                proposedVariableProductionCost();
+
+            if (
+                orderingBlocked
+                && proposedCost > 0
+            ) {
+                variableCostWarning.textContent =
+                    (
+                        "Variable-cost production limit: the 180% ceiling "
+                        + "has already been reached or exceeded. No additional "
+                        + "production can be ordered this month. Set all "
+                        + "replenishment quantities to zero."
+                    );
+
+                variableCostWarning.classList.add(
+                    "visible"
+                );
+
+                return false;
+            }
+
+            if (
+                Number.isFinite(remainingCapacity)
+                && proposedCost > remainingCapacity + 0.005
+            ) {
+                variableCostWarning.textContent =
+                    (
+                        "Variable-cost production limit: the proposed "
+                        + "replenishment requires "
+                        + money(proposedCost, 0)
+                        + " of variable production cost, but only "
+                        + money(remainingCapacity, 0)
+                        + " remains before the 180% ceiling is reached. "
+                        + "Reduce replenishment quantities before finalizing."
+                    );
+
+                variableCostWarning.classList.add(
+                    "visible"
+                );
+
+                return false;
+            }
+
+            variableCostWarning.textContent = "";
+            variableCostWarning.classList.remove(
+                "visible"
+            );
+
+            return true;
+        }
+
+
+        function updateFinalizeState() {
+
+            if (!finalizeButton) {
+                return;
+            }
+
+            const pricesValid =
+                validatePriceLimits();
+
+            const variableCostValid =
+                validateVariableCostCapacity();
+
+            finalizeButton.disabled =
+                !(
+                    pricesValid
+                    && variableCostValid
+                );
+        }
+
+
+        /* =========================================================
+           INITIALIZE PRODUCT CONTROLLERS
+           ========================================================= */
+
+        document
+            .querySelectorAll(
+                ".pricing-controller"
+            )
+            .forEach(
+                function (card) {
+
+                    const productId =
+                        card.dataset.product;
+
+                    const priceInput =
+                        card.querySelector(
+                            'input[type="number"]'
+                        );
+
+                    if (priceInput) {
+
+                        priceInput.addEventListener(
+                            "input",
+                            function () {
+                                calculateProduct(
+                                    productId
+                                );
+
+                                updateFinalizeState();
+                            }
+                        );
+
+                        priceInput.addEventListener(
+                            "change",
+                            function () {
+                                calculateProduct(
+                                    productId
+                                );
+
+                                updateFinalizeState();
+                            }
+                        );
+                    }
+
+                    /*
+                     * Python has already rendered valid initial
+                     * values. This call synchronizes the page when
+                     * a bound form contains a previously entered
+                     * price or a POST returns validation errors.
+                     */
+                    calculateProduct(
+                        productId
+                    );
+                }
+            );
+
+        document
+            .querySelectorAll(
+                ".replenishment-controller input[type=\"number\"]"
+            )
+            .forEach(
+                function (input) {
+
+                    input.addEventListener(
+                        "input",
+                        updateFinalizeState
+                    );
+
+                    input.addEventListener(
+                        "change",
+                        updateFinalizeState
+                    );
+                }
+            );
+
+        updateFinalizeState();
+    }
+);
+</script>
+{% endblock %}

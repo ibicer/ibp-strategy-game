@@ -1,0 +1,2930 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+    Year {{ scenario_year.year_number }} AOP Performance Review | {{ game.name }}
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+
+    /* ==========================================================
+       YEAR-END AOP PERFORMANCE REVIEW
+       ========================================================== */
+
+    .review-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+    }
+
+    .review-hero {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(28px, 5vw, 52px);
+        border-radius: 28px;
+        color: #ffffff;
+        background:
+            radial-gradient(
+                circle at 88% 10%,
+                rgba(214, 169, 77, 0.18),
+                transparent 30%
+            ),
+            radial-gradient(
+                circle at 10% 100%,
+                rgba(75, 200, 190, 0.14),
+                transparent 32%
+            ),
+            linear-gradient(
+                145deg,
+                #07131f,
+                #123149 58%,
+                #0e5f62
+            );
+        box-shadow: var(--shadow-lg);
+    }
+
+    .review-hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 28px;
+    }
+
+    .review-hero h1 {
+        max-width: 760px;
+        margin: 8px 0 12px;
+        font-size: clamp(2.4rem, 5vw, 4.8rem);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+    }
+
+    .review-hero-copy {
+        max-width: 690px;
+        margin: 0;
+        color: rgba(255,255,255,.70);
+        font-size: 1.02rem;
+        line-height: 1.7;
+    }
+
+
+    /* ==========================================================
+       BOARD REWARD STRIP
+       ========================================================== */
+
+    .reward-board {
+        min-width: 330px;
+        padding: 18px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 20px;
+        background: rgba(255,255,255,.055);
+        backdrop-filter: blur(12px);
+    }
+
+    .reward-board-title {
+        margin-bottom: 13px;
+        color: rgba(255,255,255,.58);
+        font-size: .68rem;
+        font-weight: 850;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .reward-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .reward-person {
+        padding: 11px 8px;
+        text-align: center;
+        border-radius: 14px;
+        background: rgba(0,0,0,.12);
+    }
+
+    .reward-person span {
+        display: block;
+        margin-bottom: 5px;
+        color: rgba(255,255,255,.55);
+        font-size: .66rem;
+    }
+
+    .reward-letter {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        margin: auto;
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 50%;
+        color: rgba(255,255,255,.20);
+        font-family: Georgia, serif;
+        font-size: 1.45rem;
+        font-weight: 700;
+        transition:
+            color .45s ease,
+            border-color .45s ease,
+            background .45s ease,
+            transform .45s ease,
+            box-shadow .45s ease;
+    }
+
+    .reward-letter.earned {
+        color: #f5ce68;
+        border-color: rgba(245,206,104,.65);
+        background: rgba(214,169,77,.14);
+        transform: scale(1.08);
+        box-shadow:
+            0 0 0 5px rgba(214,169,77,.06),
+            0 0 24px rgba(214,169,77,.25);
+    }
+
+
+    /* ==========================================================
+       BOARDROOM
+       ========================================================== */
+
+    .board-review-stage {
+        margin-top: 24px;
+        padding: clamp(20px, 4vw, 34px);
+        border: 1px solid rgba(21,63,55,.10);
+        border-radius: 26px;
+        background: rgba(255,255,255,.88);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .board-review-layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 30px;
+    }
+
+
+    /* ==========================================================
+       BOARD MEMBER RAIL
+       ========================================================== */
+
+    .board-member-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .board-person {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        opacity: .42;
+        transition: .35s ease;
+    }
+
+    .board-person.active {
+        opacity: 1;
+        border-color: rgba(21,63,55,.10);
+        background: #f4f8f6;
+        transform: translateX(3px);
+    }
+
+    .board-person.complete {
+        opacity: .72;
+    }
+
+    .board-person img {
+        width: 54px !important;
+        height: 54px !important;
+        max-width: 54px !important;
+        min-width: 54px !important;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(21,63,55,.12);
+    }
+
+    .board-person strong {
+        display: block;
+        font-size: .88rem;
+    }
+
+    .board-person span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: .70rem;
+    }
+
+
+    /* ==========================================================
+       DIALOGUE
+       ========================================================== */
+
+    .review-dialogue {
+        min-height: 500px;
+    }
+
+    .speaker-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .speaker-header img {
+        width: 68px !important;
+        height: 68px !important;
+        max-width: 68px !important;
+        min-width: 68px !important;
+        object-fit: cover;
+        border-radius: 50%;
+        box-shadow: 0 8px 24px rgba(20,45,40,.14);
+    }
+
+    .speaker-header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+    }
+
+    .speaker-header p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: .82rem;
+    }
+
+    .dialogue-bubble {
+        max-width: 850px;
+        min-height: 92px;
+        padding: 20px 22px;
+        border: 1px solid rgba(21,63,55,.10);
+        border-radius: 8px 22px 22px 22px;
+        background:
+            linear-gradient(
+                145deg,
+                #f7fbf9,
+                #ffffff
+            );
+        box-shadow: 0 12px 30px rgba(25,54,48,.07);
+    }
+
+    .dialogue-bubble p {
+        margin: 0;
+        color: #263b37;
+        font-size: .98rem;
+        line-height: 1.75;
+    }
+
+    .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1.05em;
+        margin-left: 2px;
+        vertical-align: -.12em;
+        background: var(--teal);
+        animation: cursorBlink .8s infinite;
+    }
+
+    @keyframes cursorBlink {
+        50% {
+            opacity: 0;
+        }
+    }
+
+
+    /* ==========================================================
+       RESULT CARDS
+       ========================================================== */
+
+    .review-results {
+        display: none;
+        margin-top: 22px;
+    }
+
+    .review-results.visible {
+        display: block;
+        animation: reviewReveal .5s ease both;
+    }
+
+    @keyframes reviewReveal {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .result-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .review-result-card {
+        padding: 17px;
+        border: 1px solid rgba(21,63,55,.09);
+        border-radius: 17px;
+        background: #ffffff;
+    }
+
+    .review-result-card small {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: .64rem;
+        font-weight: 850;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+    }
+
+    .review-result-card strong {
+        display: block;
+        font-size: clamp(1.35rem, 3vw, 2rem);
+        letter-spacing: -.035em;
+    }
+
+    .review-result-card span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: .76rem;
+    }
+
+    .result-wide {
+        grid-column: 1 / -1;
+    }
+
+
+    /* ==========================================================
+       DECISION PANEL
+       ========================================================== */
+
+    .board-decision {
+        display: none;
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .board-decision.visible {
+        display: block;
+        animation: reviewReveal .45s ease both;
+    }
+
+    .board-decision.reward-earned {
+        border: 1px solid rgba(185,137,34,.25);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,249,227,.92),
+                rgba(255,255,255,.96)
+            );
+    }
+
+    .board-decision.reward-missed {
+        border: 1px solid rgba(154,77,64,.15);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,245,242,.92),
+                rgba(255,255,255,.96)
+            );
+    }
+
+    .decision-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .decision-r {
+        width: 50px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        font-family: Georgia, serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .reward-earned .decision-r {
+        color: #b88318;
+        border: 1px solid rgba(184,131,24,.35);
+        background: rgba(214,169,77,.12);
+        box-shadow: 0 0 24px rgba(214,169,77,.16);
+    }
+
+    .reward-missed .decision-r {
+        color: #9a756e;
+        border: 1px solid rgba(154,117,110,.20);
+        background: rgba(154,117,110,.07);
+    }
+
+    .decision-heading strong {
+        display: block;
+        font-size: 1rem;
+    }
+
+    .decision-heading p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: .80rem;
+        line-height: 1.5;
+    }
+
+
+    /* ==========================================================
+       CONTROLS
+       ========================================================== */
+
+    .review-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 22px;
+    }
+
+    .review-next {
+        display: none;
+    }
+
+    .review-next.visible {
+        display: inline-flex;
+    }
+
+
+    /* ==========================================================
+       YEAR 1 IBP STRATEGY REFLECTION
+       ========================================================== */
+
+    .strategy-reflection {
+        overflow: hidden;
+        border: 1px solid rgba(21,63,55,.10);
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .strategy-reflection-intro {
+        padding: 16px 18px;
+        border-bottom: 1px solid rgba(21,63,55,.08);
+        background:
+            linear-gradient(
+                145deg,
+                rgba(240,248,246,.94),
+                rgba(255,255,255,.98)
+            );
+    }
+
+    .strategy-reflection-intro strong {
+        display: block;
+        color: var(--navy-900);
+        font-size: .92rem;
+    }
+
+    .strategy-reflection-intro p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: .78rem;
+        line-height: 1.55;
+    }
+
+    .strategy-table-wrap {
+        overflow-x: auto;
+    }
+
+    .strategy-table {
+        width: 100%;
+        min-width: 790px;
+        border-collapse: collapse;
+    }
+
+    .strategy-table th,
+    .strategy-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(21,63,55,.08);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .strategy-table th:first-child,
+    .strategy-table td:first-child {
+        text-align: left;
+    }
+
+    .strategy-table thead th {
+        color: #ffffff;
+        background: #173d49;
+        font-size: .69rem;
+        font-weight: 850;
+        letter-spacing: .055em;
+        text-transform: uppercase;
+    }
+
+    .strategy-table thead th.standard {
+        background: #20615d;
+    }
+
+    .strategy-table thead th.discount {
+        background: #8a6a25;
+    }
+
+    .strategy-table thead th.premium {
+        background: #445d72;
+    }
+
+    .strategy-table tbody td {
+        color: #30443f;
+        font-size: .79rem;
+    }
+
+    .strategy-table tbody td:first-child {
+        color: var(--navy-900);
+        font-weight: 800;
+    }
+
+    .strategy-table tbody tr:nth-child(even) {
+        background: rgba(244,248,246,.70);
+    }
+
+    .strategy-table .metric-emphasis td {
+        font-weight: 850;
+    }
+
+    .strategy-table .roic-row td {
+        background: rgba(223,247,244,.46);
+        font-weight: 850;
+    }
+
+    .strategy-table-note {
+        padding: 12px 18px 15px;
+        color: var(--muted);
+        font-size: .72rem;
+        line-height: 1.55;
+    }
+
+
+    /* ==========================================================
+       FINAL BOARD SUMMARY
+       ========================================================== */
+
+    .final-board-summary {
+        display: none;
+        margin-top: 24px;
+        padding: clamp(26px, 5vw, 44px);
+        text-align: center;
+        border-radius: 24px;
+        color: #ffffff;
+        background:
+            radial-gradient(
+                circle at 50% 0,
+                rgba(214,169,77,.18),
+                transparent 34%
+            ),
+            linear-gradient(
+                145deg,
+                #0b1d2a,
+                #173d49
+            );
+        box-shadow: var(--shadow-lg);
+    }
+
+    .final-board-summary.visible {
+        display: block;
+        animation: reviewReveal .6s ease both;
+    }
+
+    .final-board-summary h2 {
+        margin: 6px 0 10px;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        letter-spacing: -.05em;
+    }
+
+    .final-board-summary > p {
+        max-width: 650px;
+        margin: 0 auto;
+        color: rgba(255,255,255,.68);
+    }
+
+    .final-rewards {
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        margin: 28px 0;
+    }
+
+    .final-r {
+        width: 66px;
+        height: 66px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        font-family: Georgia, serif;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .final-r.earned {
+        color: #f5ce68;
+        border: 1px solid rgba(245,206,104,.60);
+        background: rgba(214,169,77,.13);
+        box-shadow: 0 0 28px rgba(214,169,77,.18);
+    }
+
+    .final-r.missed {
+        color: rgba(255,255,255,.20);
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.03);
+    }
+
+    .final-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+
+    /* ==========================================================
+       RESPONSIVE
+       ========================================================== */
+
+    @media (max-width: 860px) {
+
+        .review-hero-top {
+            display: block;
+        }
+
+        .reward-board {
+            min-width: 0;
+            margin-top: 24px;
+        }
+
+        .board-review-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .board-member-rail {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .board-person {
+            display: block;
+            text-align: center;
+        }
+
+        .board-person img {
+            margin: 0 auto 6px;
+        }
+
+    }
+
+    @media (max-width: 620px) {
+
+        .result-card-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .result-wide {
+            grid-column: auto;
+        }
+
+        .board-member-rail {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="review-shell">
+
+    <!-- ==========================================================
+         HERO
+         ========================================================== -->
+
+    <section class="review-hero">
+
+        <div class="review-hero-top">
+
+            <div>
+
+                <div class="eyebrow">
+                    Year {{ scenario_year.year_number }}
+                    · AOP Performance Review
+                </div>
+
+                <h1>
+                    Review the year against the plan.
+                </h1>
+
+                <p class="review-hero-copy">
+                    Twelve monthly S&amp;OP cycles are now complete.
+                    The board will assess actual performance against
+                    the commitments established in the Annual Operating Plan.
+                    {% if scenario_year.year_number == 2 %}
+                        The board will now assess how you handled
+                        market expansion, higher demand uncertainty,
+                        pricing flexibility, and inventory exposure.
+                    {% else %}
+                        The board will review your results
+                        one member at a time.
+                    {% endif %}
+                </p>
+
+            </div>
+
+
+            <aside class="reward-board">
+
+                <div class="reward-board-title">
+                    AOP Performance Rewards
+                </div>
+
+                <div class="reward-row">
+
+                    <div class="reward-person">
+                        <span>Mrs Clarke</span>
+                        <div
+                            class="reward-letter"
+                            id="clarkeReward"
+                        >
+                            R
+                        </div>
+                    </div>
+
+                    <div class="reward-person">
+                        <span>Mr Daniels</span>
+                        <div
+                            class="reward-letter"
+                            id="danielsReward"
+                        >
+                            R
+                        </div>
+                    </div>
+
+                    <div class="reward-person">
+                        <span>Ms Nauta</span>
+                        <div
+                            class="reward-letter"
+                            id="nautaReward"
+                        >
+                            R
+                        </div>
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         AOP PERFORMANCE REVIEW STAGE
+         ========================================================== -->
+
+    <section
+        class="board-review-stage"
+        id="boardReviewStage"
+    >
+
+        <div class="board-review-layout">
+
+
+            <!-- BOARD MEMBER RAIL -->
+
+            <aside class="board-member-rail">
+
+                <div
+                    class="board-person active"
+                    data-person="clarke"
+                >
+                    <img
+                        src="{% static 'simulation/board/clarke.png' %}"
+                        alt="Mrs Clarke"
+                    >
+
+                    <div>
+                        <strong>Mrs Clarke</strong>
+                        <span>Chair</span>
+                    </div>
+                </div>
+
+
+                <div
+                    class="board-person"
+                    data-person="daniels"
+                >
+                    <img
+                        src="{% static 'simulation/board/daniels.png' %}"
+                        alt="Mr Daniels"
+                    >
+
+                    <div>
+                        <strong>Mr Daniels</strong>
+                        <span>Commercial</span>
+                    </div>
+                </div>
+
+
+                <div
+                    class="board-person"
+                    data-person="nauta"
+                >
+                    <img
+                        src="{% static 'simulation/board/nauta.png' %}"
+                        alt="Ms Nauta"
+                    >
+
+                    <div>
+                        <strong>Ms Nauta</strong>
+                        <span>Operations</span>
+                    </div>
+                </div>
+
+            </aside>
+
+
+            <!-- DIALOGUE -->
+
+            <div class="review-dialogue">
+
+                <div class="speaker-header">
+
+                    <img
+                        id="speakerImage"
+                        src="{% static 'simulation/board/clarke.png' %}"
+                        alt=""
+                    >
+
+                    <div>
+                        <h2 id="speakerName">
+                            Mrs Clarke
+                        </h2>
+
+                        <p id="speakerTitle">
+                            Chair · Financial Results
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="dialogue-bubble">
+                    <p id="dialogueText"></p>
+                </div>
+
+
+                <!-- ==================================================
+                     CLARKE RESULTS
+                     ================================================== -->
+
+                <div
+                    class="review-results"
+                    id="clarkeResults"
+                >
+
+                    <div class="result-card-grid">
+
+                        <div class="review-result-card">
+                            <small>
+                                Total Revenue Achieved
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.total_revenue|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Actual revenue generated during the year
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Revenue Target
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.revenue_target|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                {% if scenario_year.year_number == 2 %}
+                                    Revenue commitment selected in the
+                                    opening board meeting
+                                {% else %}
+                                    AOP revenue commitment
+                                {% endif %}
+                                · Year-end Board evaluation allows
+                                {{ clarke_review.revenue_tolerance_percent|floatformat:1 }}%
+                                tolerance
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Manufacturing Overhead
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.manufacturing_overhead|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Unabsorbed annual fixed manufacturing cost
+                                recognized at the August close
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Inventory Write-off
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.inventory_write_off|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Year-end inventory written off at its
+                                applicable production cost
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Total Expense
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.total_expense|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Cost of Goods Sold + Manufacturing Overhead
+                                + Inventory Write-off
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Total Budget
+                            </small>
+
+                            <strong>
+                                ${{ clarke_review.total_budget|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                {% if scenario_year.year_number == 2 %}
+                                    Operating budget associated with the
+                                    selected revenue commitment
+                                {% else %}
+                                    AOP operating budget
+                                {% endif %}
+                                · Year-end Board evaluation allows
+                                {{ clarke_review.budget_tolerance_percent|floatformat:0 }}%
+                                tolerance
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="
+                        board-decision
+                        {% if clarke_review.reward %}
+                            reward-earned
+                        {% else %}
+                            reward-missed
+                        {% endif %}
+                    "
+                    id="clarkeDecision"
+                >
+
+                    <div class="decision-heading">
+
+                        <div class="decision-r">
+                            R
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                {% if clarke_review.reward %}
+                                    Mrs Clarke awards the Financial Reward.
+                                {% else %}
+                                    Financial Reward not awarded.
+                                {% endif %}
+                            </strong>
+
+                            <p>
+                                {% if not clarke_review.revenue_within_tolerance %}
+                                    Revenue fell outside the Board's permitted
+                                    0.2% year-end tolerance around the annual
+                                    revenue commitment. The Financial Reward
+                                    therefore cannot be awarded.
+                                {% elif not clarke_review.budget_within_tolerance %}
+                                    Revenue remained within the Board's permitted
+                                    0.2% year-end tolerance, but total accounting
+                                    expense exceeded the permitted 5% budget tolerance.
+                                {% elif not clarke_review.revenue_target_achieved %}
+                                    Revenue finished slightly below the official
+                                    AOP target but remained within the Board's
+                                    permitted 0.2% year-end tolerance, while total
+                                    accounting expense stayed within the permitted
+                                    5% budget tolerance.
+                                {% else %}
+                                    Revenue achieved the official AOP target and
+                                    total accounting expense remained within the
+                                    Board's permitted 5% budget tolerance.
+                                {% endif %}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     DANIELS RESULTS
+                     ================================================== -->
+
+                <div
+                    class="review-results"
+                    id="danielsResults"
+                >
+
+                    <div class="result-card-grid">
+
+                        <div class="review-result-card">
+                            <small>
+                                Sales Credit Policy
+                            </small>
+
+                            <strong>
+                                {{ daniels_review.sales_credit_rate_percent|floatformat:0 }}%
+                            </strong>
+
+                            <span>
+                                {% if daniels_review.maximum_flexibility_selected %}
+                                    Maximum commercial flexibility selected
+                                {% else %}
+                                    Mr Daniels' reward requires the 20% policy
+                                {% endif %}
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Sales Credit Collected
+                            </small>
+
+                            <strong>
+                                ${{ daniels_review.sales_credit_collected|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Commercial value generated through pricing
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card result-wide">
+                            <small>
+                                Sales Credit Target
+                            </small>
+
+                            <strong>
+                                ${{ daniels_review.sales_credit_target|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                AOP target associated with the selected
+                                {{ daniels_review.sales_credit_rate_percent|floatformat:0 }}%
+                                sales-credit policy
+                                · Year-end Board evaluation allows
+                                {{ daniels_review.sales_credit_tolerance_percent|floatformat:0 }}%
+                                tolerance
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="
+                        board-decision
+                        {% if daniels_review.reward %}
+                            reward-earned
+                        {% else %}
+                            reward-missed
+                        {% endif %}
+                    "
+                    id="danielsDecision"
+                >
+
+                    <div class="decision-heading">
+
+                        <div class="decision-r">
+                            R
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                {% if daniels_review.reward %}
+                                    Mr Daniels awards the Commercial Reward.
+                                {% else %}
+                                    Commercial Reward not awarded.
+                                {% endif %}
+                            </strong>
+
+                            <p>
+                                {% if daniels_review.reward %}
+                                    You selected the 20% maximum-flexibility
+                                    sales-credit policy and finished within the
+                                    Board's permitted 2% year-end tolerance around
+                                    the associated annual sales-credit target.
+
+                                {% elif not daniels_review.maximum_flexibility_selected %}
+                                    The maximum-flexibility 20% sales-credit
+                                    policy was not selected. Mr Daniels' reward
+                                    requires that policy as well as sales-credit
+                                    performance within the Board's permitted
+                                    2% year-end tolerance.
+
+                                {% else %}
+                                    The 20% maximum-flexibility policy was selected,
+                                    but sales credit collected fell outside the
+                                    Board's permitted 2% year-end tolerance around
+                                    the annual sales-credit target.
+                                {% endif %}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     NAUTA RESULTS
+                     ================================================== -->
+
+                <div
+                    class="review-results"
+                    id="nautaResults"
+                >
+
+                    <div class="result-card-grid">
+
+                        <div class="review-result-card">
+                            <small>
+                                Cost of Carrying Inventory
+                            </small>
+
+                            <strong>
+                                ${{ nauta_review.cost_of_carrying_inventory|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Inventory holding cost accumulated during the year
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Cost of Lost Sales
+                            </small>
+
+                            <strong>
+                                ${{ nauta_review.cost_of_lost_sales|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Contribution opportunity lost through shortages
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Inventory Write-off
+                            </small>
+
+                            <strong>
+                                ${{ nauta_review.inventory_write_off|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                August ending inventory written off because the next
+                                product line uses improved drivetrain technology
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card">
+                            <small>
+                                Manufacturing Overhead
+                            </small>
+
+                            <strong>
+                                ${{ nauta_review.manufacturing_overhead|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Unabsorbed annual fixed-cost budget recognized at year end
+                            </span>
+                        </div>
+
+
+                        <div class="review-result-card result-wide">
+                            <small>
+                                Total Operating Inefficiency
+                            </small>
+
+                            <strong>
+                                ${{ nauta_review.total_operating_inefficiency|floatformat:0 }}
+                            </strong>
+
+                            <span>
+                                Reward threshold:
+                                less than {{ nauta_review.operating_inefficiency_limit_percent|floatformat:0 }}%
+                                of AOP budget =
+                                ${{ nauta_review.operating_inefficiency_limit|floatformat:0 }}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="
+                        board-decision
+                        {% if nauta_review.reward %}
+                            reward-earned
+                        {% else %}
+                            reward-missed
+                        {% endif %}
+                    "
+                    id="nautaDecision"
+                >
+
+                    <div class="decision-heading">
+
+                        <div class="decision-r">
+                            R
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                {% if nauta_review.reward %}
+                                    Ms Nauta awards the Operations Reward.
+                                {% else %}
+                                    Operations Reward not awarded.
+                                {% endif %}
+                            </strong>
+
+                            <p>
+                                {% if nauta_review.reward %}
+                                    The combined cost of carrying inventory,
+                                    lost sales, inventory write-off, and
+                                    manufacturing overhead remained below
+                                    10% of the committed AOP operating budget.
+                                {% else %}
+                                    The combined operating inefficiency from
+                                    carrying inventory, lost sales, inventory
+                                    write-off, and manufacturing overhead reached
+                                    or exceeded 10% of the committed AOP budget.
+                                {% endif %}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {% if scenario_year.year_number == 1 %}
+                <!-- ==================================================
+                     YEAR 1 IBP ALTERNATIVE-STRATEGY REFLECTION
+                     ================================================== -->
+
+                <div
+                    class="review-results"
+                    id="danielsYear1StrategyResults"
+                >
+                    <div class="strategy-reflection">
+
+                        <div class="strategy-reflection-intro">
+                            <strong>
+                                Year 1 · Alternative Strategy Comparison
+                            </strong>
+
+                            <p>
+                                The same Year 1 environment is evaluated under
+                                standard pricing, a 10% discount in every month,
+                                and a 10% premium in every month.
+                            </p>
+                        </div>
+
+                        <div class="strategy-table-wrap">
+                            <table class="strategy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Measure</th>
+                                        <th class="standard">Standard</th>
+                                        <th class="discount">10% Discount</th>
+                                        <th class="premium">10% Premium</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td>Revenue</td>
+                                        <td>$19,313,500</td>
+                                        <td>$20,857,500</td>
+                                        <td>$16,996,100</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Revenue vs. $19.0M Target</td>
+                                        <td>+1.65%</td>
+                                        <td>+9.78%</td>
+                                        <td>−10.55%</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Total Expense</td>
+                                        <td>$10,526,550</td>
+                                        <td>$11,445,200</td>
+                                        <td>$9,607,700</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Expense vs. $10.5M Budget</td>
+                                        <td>+0.25%</td>
+                                        <td>+9.00%</td>
+                                        <td>−8.50%</td>
+                                    </tr>
+
+                                    <tr class="metric-emphasis">
+                                        <td>Profit</td>
+                                        <td>$8,786,950</td>
+                                        <td>$9,412,300</td>
+                                        <td>$7,388,400</td>
+                                    </tr>
+
+                                    <tr class="roic-row">
+                                        <td>ROIC = Profit / Total Expense</td>
+                                        <td>83.47%</td>
+                                        <td>82.24%</td>
+                                        <td>76.90%</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Sales Credit Collected</td>
+                                        <td>$3,862,700</td>
+                                        <td>$2,317,500</td>
+                                        <td>$3,090,200</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Sales-Credit Target</td>
+                                        <td>$3,800,000</td>
+                                        <td>$3,800,000</td>
+                                        <td>$3,800,000</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Operating Inefficiency</td>
+                                        <td>$17,523</td>
+                                        <td>$19,897</td>
+                                        <td>$1,174,272</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="strategy-table-note">
+                            ROIC is defined here as annual profit divided by
+                            total annual expense. The purpose of the comparison
+                            is to evaluate enterprise performance, not profit alone.
+                        </div>
+
+                    </div>
+                </div>
+                {% endif %}
+
+
+                <!-- CONTROLS -->
+
+                <div class="review-controls">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary review-next"
+                        id="reviewNextButton"
+                    >
+                        Next →
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         FINAL BOARD SUMMARY
+         ========================================================== -->
+
+    <section
+        class="final-board-summary"
+        id="finalBoardSummary"
+    >
+
+        <div class="eyebrow">
+            Year {{ scenario_year.year_number }}
+            · AOP Performance Review Complete
+        </div>
+
+        <h2>
+            {{ rewards.earned }} of 3 Board Rewards Earned
+        </h2>
+
+        <p>
+            The board has completed its review of annual financial,
+            commercial, and operating performance against the AOP.
+            {% if scenario_year.year_number == 2 %}
+                The assessment reflects both the growth commitment
+                selected at the beginning of Year 2 and your ability
+                to manage the wider demand uncertainty introduced
+                during the year.
+            {% endif %}
+        </p>
+
+
+        <div class="final-rewards">
+
+            <div
+                class="
+                    final-r
+                    {% if rewards.clarke %}
+                        earned
+                    {% else %}
+                        missed
+                    {% endif %}
+                "
+                title="Mrs Clarke"
+            >
+                R
+            </div>
+
+            <div
+                class="
+                    final-r
+                    {% if rewards.daniels %}
+                        earned
+                    {% else %}
+                        missed
+                    {% endif %}
+                "
+                title="Mr Daniels"
+            >
+                R
+            </div>
+
+            <div
+                class="
+                    final-r
+                    {% if rewards.nauta %}
+                        earned
+                    {% else %}
+                        missed
+                    {% endif %}
+                "
+                title="Ms Nauta"
+            >
+                R
+            </div>
+
+        </div>
+
+
+        <div class="final-actions">
+
+            {% if next_scenario_year %}
+
+                <form
+                    method="post"
+                    action="{% url 'advance_year' code=game.code year=scenario_year.year_number %}"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-hero"
+                    >
+                        Continue to Year
+                        {{ next_scenario_year.year_number }}
+                        →
+                    </button>
+                </form>
+
+                {% if allow_redo_current_year %}
+                    <button
+                        type="button"
+                        class="btn btn-ghost-hero"
+                        data-open-reset-modal
+                    >
+                        Redo Year
+                        {{ scenario_year.year_number }}
+                    </button>
+                {% endif %}
+
+            {% else %}
+
+                {% if allow_redo_current_year %}
+                    <button
+                        type="button"
+                        class="btn btn-hero"
+                        data-open-reset-modal
+                    >
+                        Redo Year
+                        {{ scenario_year.year_number }}
+                    </button>
+                {% endif %}
+
+                {% if allow_full_restart %}
+                    <button
+                        type="button"
+                        class="btn btn-ghost-hero"
+                        data-open-restart-modal
+                    >
+                        Start Over from Year 1
+                    </button>
+                {% endif %}
+
+                <a
+                    href="{% url 'results_summary' code=game.code %}"
+                    class="btn btn-hero"
+                >
+                    Summarize Results →
+                </a>
+
+            {% endif %}
+
+
+            <a
+                href="{% url 'game_lobby' %}"
+                class="btn btn-light"
+            >
+                Return to Game Lobby
+            </a>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+{% if allow_redo_current_year %}
+<!-- ==============================================================
+     RESET YEAR MODAL
+     ============================================================== -->
+
+<div
+    class="modal-backdrop-custom"
+    id="resetYearModal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resetYearTitle"
+    >
+
+        <header class="modal-header-custom">
+
+            <h2 id="resetYearTitle">
+                Redo Year {{ scenario_year.year_number }}?
+            </h2>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-reset-modal
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </header>
+
+
+        <div class="modal-body-custom">
+
+            <p>
+                Restarting will permanently delete your Annual Operating Plan,
+                monthly S&amp;OP decisions, financial results, and year-end
+                AOP review outcome for this year.
+            </p>
+
+            <ul>
+                <li>Annual Operating Plan decisions</li>
+                <li>Monthly S&amp;OP replenishment and pricing decisions</li>
+                <li>Revenue, cost, and inventory results</li>
+                <li>Board rewards</li>
+            </ul>
+
+            <div class="callout warning">
+
+                <strong>
+                    Scenario data remains unchanged
+                </strong>
+
+                <p>
+                    True demand and rolling-horizon forecasts will
+                    not be deleted.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <footer class="modal-footer-custom">
+
+            <button
+                type="button"
+                class="btn btn-light"
+                data-close-reset-modal
+            >
+                Keep Results
+            </button>
+
+            <form
+                method="post"
+                action="{% url 'reset_year' code=game.code year=scenario_year.year_number %}"
+            >
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-danger"
+                >
+                    Yes, Redo Year
+                </button>
+            </form>
+
+        </footer>
+
+    </div>
+
+</div>
+
+
+{% endif %}
+
+{% if not next_scenario_year and allow_full_restart %}
+<!-- ==============================================================
+     START OVER FROM YEAR 1 MODAL
+     ============================================================== -->
+
+<div
+    class="modal-backdrop-custom"
+    id="restartSimulationModal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="restartSimulationTitle"
+    >
+
+        <header class="modal-header-custom">
+
+            <h2 id="restartSimulationTitle">
+                Start Over from Year 1?
+            </h2>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-restart-modal
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </header>
+
+
+        <div class="modal-body-custom">
+
+            <p>
+                Starting over will permanently delete your player results
+                from both Year 1 and Year 2 and return you to the opening
+                Year 1 Annual Operating Plan board meeting.
+            </p>
+
+            <ul>
+                <li>Year 1 and Year 2 Annual Operating Plans</li>
+                <li>All monthly S&amp;OP replenishment and pricing decisions</li>
+                <li>Revenue, cost, inventory, and operating results</li>
+                <li>Year-end board rewards for both years</li>
+            </ul>
+
+            <div class="callout warning">
+
+                <strong>
+                    Scenario data remains unchanged
+                </strong>
+
+                <p>
+                    Products, scenario years, true demand, rolling-horizon
+                    forecasts, and the game's underlying configuration will
+                    not be deleted.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <footer class="modal-footer-custom">
+
+            <button
+                type="button"
+                class="btn btn-light"
+                data-close-restart-modal
+            >
+                Keep Results
+            </button>
+
+            <form
+                method="post"
+                action="{% url 'restart_from_year_one' code=game.code %}"
+            >
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-danger"
+                >
+                    Yes, Start Over from Year 1
+                </button>
+            </form>
+
+        </footer>
+
+    </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        /* ==========================================================
+           BOARD REVIEW CONFIGURATION
+
+           Intentionally slower than an ordinary UI animation.
+           Production Typing speed is 75
+           ========================================================== */
+
+        const TYPING_SPEED = 20;
+        const AFTER_BUBBLE_PAUSE = 1000;
+
+
+        /* ==========================================================
+           SERVER RESULTS
+           ========================================================== */
+
+        const rewardResults = {
+            clarke:
+                {% if clarke_review.reward %}
+                    true
+                {% else %}
+                    false
+                {% endif %},
+
+            daniels:
+                {% if daniels_review.reward %}
+                    true
+                {% else %}
+                    false
+                {% endif %},
+
+            nauta:
+                {% if nauta_review.reward %}
+                    true
+                {% else %}
+                    false
+                {% endif %}
+        };
+
+
+        /* ==========================================================
+           REVIEW SEQUENCE
+
+           Each board member has:
+           1. Results conversation
+           2. Conditional advisory conversations, when applicable
+           3. Reward decision conversation
+           ========================================================== */
+
+        const reviewSteps = [
+
+            {
+                person: "clarke",
+                name: "Mrs Clarke",
+                title: "Chair · Financial Results",
+                image:
+                    "{% static 'simulation/board/clarke.png' %}",
+
+                text:
+                    {% if scenario_year.year_number == 2 %}
+                        "Welcome back. Year 2 was built around market expansion "
+                        + "and a more ambitious commercial opportunity. At the "
+                        + "Annual Operating Plan stage, you selected a revenue commitment "
+                        + "and the operating budget associated with it. I want to "
+                        + "compare the revenue you actually achieved with that commitment "
+                        + "and then review the full accounting expense, including COGS, "
+                        + "any August manufacturing overhead, and any inventory write-off."
+                    {% else %}
+                        "Welcome back. We have now completed the fiscal year. "
+                        + "I want to begin with the overall financial result. "
+                        + "We will compare the revenue you achieved with the "
+                        + "Annual Operating Plan commitment and then review the "
+                        + "full accounting expense, including COGS, any August "
+                        + "manufacturing overhead, and any inventory write-off."
+                    {% endif %},
+
+                results: "clarkeResults",
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "clarke",
+                name: "Mrs Clarke",
+                title: "Chair · Reward Decision",
+                image:
+                    "{% static 'simulation/board/clarke.png' %}",
+
+                text:
+                    {% if clarke_review.reward %}
+                        {% if clarke_review.revenue_target_achieved %}
+                            "For the year-end evaluation, the Board allows a "
+                            + "zero-point-two-percent tolerance around the annual revenue "
+                            + "target and a five-percent tolerance above the operating "
+                            + "budget. You achieved the official revenue target and kept "
+                            + "total accounting expense within the permitted budget range. "
+                            + "I am awarding you my Board Reward."
+                        {% else %}
+                            "For the year-end evaluation, the Board allows a "
+                            + "zero-point-two-percent tolerance around the annual revenue "
+                            + "target and a five-percent tolerance above the operating "
+                            + "budget. Your revenue finished slightly below the official "
+                            + "commitment but remained within the permitted revenue range, "
+                            + "and total accounting expense remained within the permitted "
+                            + "budget range. I am awarding you my Board Reward."
+                        {% endif %}
+                    {% elif not clarke_review.revenue_within_tolerance %}
+                        "For the year-end evaluation, the Board allows a "
+                        + "zero-point-two-percent tolerance around the annual revenue "
+                        + "target and a five-percent tolerance above the operating budget. "
+                        + "Your revenue finished outside the permitted revenue range, "
+                        + "so I cannot award the Financial Reward."
+                    {% else %}
+                        "For the year-end evaluation, the Board allows a "
+                        + "zero-point-two-percent tolerance around the annual revenue "
+                        + "target and a five-percent tolerance above the operating budget. "
+                        + "Your revenue remained within the permitted range, but total "
+                        + "accounting expense exceeded the Board's budget tolerance. "
+                        + "Revenue growth must be accompanied by financial discipline, "
+                        + "so I cannot award the Financial Reward."
+                    {% endif %},
+
+                results: null,
+                decision: "clarkeDecision",
+                reward: "clarke",
+                button:
+                    "Continue to Mr Daniels →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Commercial Results",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    {% if scenario_year.year_number == 2 %}
+                        "Now let us examine commercial execution. Year 2 gave "
+                        + "pricing an additional strategic role. You still had "
+                        + "a sales-credit commitment, but wider demand uncertainty "
+                        + "also meant that discounting could sometimes be justified "
+                        + "to liquidate excess inventory. I want to see whether you "
+                        + "used that flexibility intelligently while still delivering "
+                        + "the commercial commitment made at the start of the year."
+                    {% else %}
+                        "Now let us examine commercial execution. At the "
+                        + "beginning of the year, you selected a sales-credit "
+                        + "policy that gave the sales team pricing flexibility "
+                        + "within defined limits. That flexibility came with a "
+                        + "clear sales-credit target. I want to see whether the "
+                        + "team actually collected the amount you committed to."
+                    {% endif %},
+
+                results: "danielsResults",
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Reward Decision",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    {% if daniels_review.reward %}
+                        {% if daniels_review.target_achieved %}
+                            "For the year-end evaluation, the Board allows a "
+                            + "two-percent tolerance around the annual sales-credit target. "
+                            + "You selected our twenty-percent maximum-flexibility policy "
+                            + "and achieved the official sales-credit target. You paired "
+                            + "maximum pricing flexibility with strong commercial execution. "
+                            + "I am awarding you my Board Reward."
+                        {% else %}
+                            "For the year-end evaluation, the Board allows a "
+                            + "two-percent tolerance around the annual sales-credit target. "
+                            + "You selected our twenty-percent maximum-flexibility policy. "
+                            + "Sales credit finished slightly below the official target but "
+                            + "remained within the Board's permitted year-end range. "
+                            + "I am awarding you my Board Reward."
+                        {% endif %}
+
+                    {% elif not daniels_review.maximum_flexibility_selected %}
+                        "For the year-end evaluation, the Board allows a "
+                        + "two-percent tolerance around the annual sales-credit target. "
+                        + "However, my Board Reward is also reserved for the "
+                        + "twenty-percent maximum-flexibility commercial strategy. "
+                        + "Because that policy was not selected, I cannot award my "
+                        + "Board Reward this year."
+
+                    {% else %}
+                        "For the year-end evaluation, the Board allows a "
+                        + "two-percent tolerance around the annual sales-credit target. "
+                        + "You selected the twenty-percent maximum-flexibility policy, "
+                        + "but sales credit collected still finished outside the permitted "
+                        + "year-end range. Maximum pricing flexibility must be matched by "
+                        + "commercial execution, so I cannot award my Board Reward."
+                    {% endif %},
+
+                results: null,
+                decision: "danielsDecision",
+                reward: "daniels",
+                button:
+                    "Continue to Ms Nauta →"
+            },
+
+            {
+                person: "nauta",
+                name: "Ms Nauta",
+                title: "Board Member · Operating Results",
+                image:
+                    "{% static 'simulation/board/nauta.png' %}",
+
+                text:
+                    {% if scenario_year.year_number == 2 %}
+                        "I will finish with operations. Year 2 deliberately gave "
+                        + "you wider demand uncertainty and removed the automatic "
+                        + "replenishment recommendation, so inventory discipline "
+                        + "was entirely your responsibility. I am evaluating four "
+                        + "operating inefficiencies: the cost of carrying inventory, "
+                        + "the cost of lost sales, any inventory write-off at the "
+                        + "August close, and any manufacturing overhead caused by "
+                        + "unabsorbed fixed cost."
+                    {% else %}
+                        "I will finish with the operating consequences of your "
+                        + "decisions. I am evaluating four operating inefficiencies: "
+                        + "the cost of carrying inventory, the contribution opportunity "
+                        + "lost through shortages, any inventory write-off at the August "
+                        + "close, and any manufacturing overhead created by unabsorbed "
+                        + "fixed cost."
+                    {% endif %},
+
+                results: "nautaResults",
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {% if nauta_review.fixed_cost_fully_absorbed_during_year %}
+            {
+                person: "nauta",
+                name: "Ms Nauta",
+                title: "Board Member · Fixed-Cost Absorption",
+                image:
+                    "{% static 'simulation/board/nauta.png' %}",
+
+                text:
+                    "You fully absorbed the annual fixed-cost budget by the end of "
+                    + "{{ nauta_review.fixed_cost_fully_absorbed_month_name }}. "
+                    + "From the following month onward, additional units no longer "
+                    + "carried labor or maintenance fixed-cost allocations. Their "
+                    + "incremental cost therefore fell to variable cost only, which "
+                    + "improved the profitability of additional sales.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+            {% endif %}
+
+            {% if nauta_review.manufacturing_overhead_incurred %}
+            {
+                person: "nauta",
+                name: "Ms Nauta",
+                title: "Board Member · Manufacturing Overhead",
+                image:
+                    "{% static 'simulation/board/nauta.png' %}",
+
+                text:
+                    "You did not fully absorb the annual fixed-cost budget during the year. "
+                    + "Part of the labor and maintenance fixed-cost pool therefore remained "
+                    + "unabsorbed. That remaining amount was recognized as manufacturing "
+                    + "overhead at the August close, reducing the profit generated during "
+                    + "the year.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+            {% endif %}
+
+            {% if nauta_review.inventory_write_off_incurred %}
+            {
+                person: "nauta",
+                name: "Ms Nauta",
+                title: "Board Member · Inventory Write-off",
+                image:
+                    "{% static 'simulation/board/nauta.png' %}",
+
+                text:
+                    "As I warned at the opening Annual Operating Plan meeting, "
+                    + "the product line is upgraded for the next fiscal year and the "
+                    + "new bikes use improved drivetrain technology. The bikes left "
+                    + "after August therefore have almost no salvage value. This is why "
+                    + "the remaining inventory has been written off and why the final "
+                    + "month's replenishment and pricing decisions matter so much.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+            {% endif %}
+
+            {
+                person: "nauta",
+                name: "Ms Nauta",
+                title: "Board Member · Reward Decision",
+                image:
+                    "{% static 'simulation/board/nauta.png' %}",
+
+                text:
+                    {% if nauta_review.reward %}
+                        {% if scenario_year.year_number == 2 %}
+                            "Despite the wider uncertainty and the absence of an "
+                            + "automatic order recommendation, your total operating "
+                            + "inefficiency remained below ten percent of the committed "
+                            + "AOP operating budget. You controlled inventory carrying "
+                            + "cost, lost-sales exposure, write-off risk, and fixed-cost "
+                            + "absorption effectively. I am awarding you my Board Reward."
+                        {% else %}
+                            "Your total operating inefficiency remained below ten "
+                            + "percent of the committed AOP operating budget. You "
+                            + "managed inventory carrying cost, lost-sales exposure, "
+                            + "write-off risk, and fixed-cost absorption effectively. "
+                            + "I am awarding you my Board Reward."
+                        {% endif %}
+                    {% else %}
+                        {% if scenario_year.year_number == 2 %}
+                            "Your total operating inefficiency reached or exceeded "
+                            + "ten percent of the committed AOP operating budget. "
+                            + "With wider uncertainty, the combined effects of inventory "
+                            + "carrying cost, lost sales, write-off exposure, and "
+                            + "manufacturing overhead were too high. I cannot award "
+                            + "my Board Reward."
+                        {% else %}
+                            "Your total operating inefficiency reached or exceeded "
+                            + "ten percent of the committed AOP operating budget. "
+                            + "The combined effects of carrying cost, lost sales, "
+                            + "inventory write-off, and manufacturing overhead were "
+                            + "too high, so I cannot award my Board Reward."
+                        {% endif %}
+                    {% endif %},
+
+                results: null,
+                decision: "nautaDecision",
+                reward: "nauta",
+                button:
+                    {% if scenario_year.year_number == 1 %}
+                        "Reflect on Year 1 →"
+                    {% else %}
+                        "Complete AOP Review →"
+                    {% endif %}
+            }
+
+            {% if scenario_year.year_number == 1 %}
+            ,
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Year 1 Reflection",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "As we finish the first year, let’s have a look at what "
+                    + "could have been done with alternative strategies.",
+
+                results: "danielsYear1StrategyResults",
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Cost Structure",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "Before comparing these strategies, remember the economics "
+                    + "behind our Annual Operating Plan. Based on the initial annual "
+                    + "forecast, expected variable cost was $4.568 million. The "
+                    + "remaining $5.932 million of our $10.5 million operating budget "
+                    + "represented fixed manufacturing costs allocated to this new "
+                    + "product line. Those fixed costs had to be absorbed through the "
+                    + "units we sold during the year.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Discount Economics",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "Now look at the 10% discount. Higher demand allows us to "
+                    + "sell beyond the initial annual forecast and absorb the "
+                    + "fixed-cost allocation more quickly. Once the annual fixed-cost "
+                    + "pool is fully absorbed, additional units carry only variable "
+                    + "cost. That is why the discount strategy can generate the "
+                    + "highest revenue and the highest absolute profit.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Profit and ROIC",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "But higher profit alone does not make it the best business "
+                    + "decision. The discount strategy increases total expense to "
+                    + "$11.45 million—about 9% above our $10.5 million budget. "
+                    + "Profit rises, but ROIC falls from 83.5% under standard pricing "
+                    + "to 82.2%. We are spending disproportionately more to generate "
+                    + "that additional profit. We do not want profit growth at the "
+                    + "expense of financial discipline.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Premium Economics",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "The 10% premium creates the opposite problem. Higher prices "
+                    + "suppress demand. We spend less, but revenue and profit both "
+                    + "fall, and ROIC declines to 76.9%. Lower sales prevent us from "
+                    + "fully absorbing the fixed costs committed to the product line, "
+                    + "creating roughly $1.16 million in manufacturing overhead. "
+                    + "Together with the other operating inefficiencies, total "
+                    + "operating inefficiency reaches about $1.17 million. Spending "
+                    + "less does not mean operating efficiently if we fail to use "
+                    + "resources already committed to the business.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Integrated Business Planning",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "This is the essence of Integrated Business Planning. Sales "
+                    + "brings orders; supply chain converts those orders into revenue, "
+                    + "but neither should optimize its decisions independently. Pricing "
+                    + "affects demand, demand affects inventory and capacity utilization, "
+                    + "and those operating decisions ultimately determine cost, profit, "
+                    + "and return on invested capital.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Commercial Governance",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "That is why our revenue target, operating budget, and sales-credit "
+                    + "commitment are not separate targets. Together, they create a "
+                    + "mechanism that keeps sales, supply chain, and finance aligned. "
+                    + "Sales credits provide pricing flexibility while discouraging "
+                    + "excessive discounting, and the operating budget ensures that "
+                    + "growth remains financially disciplined.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Next →"
+            },
+
+            {
+                person: "daniels",
+                name: "Mr Daniels",
+                title: "Board Member · Looking Ahead",
+                image:
+                    "{% static 'simulation/board/daniels.png' %}",
+
+                text:
+                    "Year 1 rewarded alignment with a relatively stable plan. "
+                    + "Year 2 will be different. Demand uncertainty will increase, "
+                    + "our guidance will be limited, and pricing will become an active "
+                    + "decision tool. Sometimes reacting to new market information will "
+                    + "make sense; sometimes it will not. You will have to determine "
+                    + "the difference.",
+
+                results: null,
+                decision: null,
+                reward: null,
+                button:
+                    "Complete AOP Review →"
+            }
+            {% endif %}
+
+        ];
+
+
+        /* ==========================================================
+           ELEMENTS
+           ========================================================== */
+
+        const dialogueText =
+            document.getElementById(
+                "dialogueText"
+            );
+
+        const speakerImage =
+            document.getElementById(
+                "speakerImage"
+            );
+
+        const speakerName =
+            document.getElementById(
+                "speakerName"
+            );
+
+        const speakerTitle =
+            document.getElementById(
+                "speakerTitle"
+            );
+
+        const nextButton =
+            document.getElementById(
+                "reviewNextButton"
+            );
+
+        const boardStage =
+            document.getElementById(
+                "boardReviewStage"
+            );
+
+        const finalSummary =
+            document.getElementById(
+                "finalBoardSummary"
+            );
+
+        let currentStep = 0;
+        let typingTimer = null;
+        let isTyping = false;
+
+
+        /* ==========================================================
+           HELPERS
+           ========================================================== */
+
+        function hideAllPanels() {
+
+            document
+                .querySelectorAll(
+                    ".review-results"
+                )
+                .forEach(
+                    function (element) {
+                        element.classList.remove(
+                            "visible"
+                        );
+                    }
+                );
+
+            document
+                .querySelectorAll(
+                    ".board-decision"
+                )
+                .forEach(
+                    function (element) {
+                        element.classList.remove(
+                            "visible"
+                        );
+                    }
+                );
+        }
+
+
+        function setActivePerson(person) {
+
+            document
+                .querySelectorAll(
+                    ".board-person"
+                )
+                .forEach(
+                    function (element) {
+
+                        element.classList.remove(
+                            "active"
+                        );
+
+                        if (
+                            element.dataset.person
+                            === person
+                        ) {
+                            element.classList.add(
+                                "active"
+                            );
+                        }
+                    }
+                );
+        }
+
+
+        function awardReward(person) {
+
+            if (
+                !person
+                || !rewardResults[person]
+            ) {
+                return;
+            }
+
+            const rewardElement =
+                document.getElementById(
+                    person + "Reward"
+                );
+
+            if (rewardElement) {
+
+                window.setTimeout(
+                    function () {
+                        rewardElement
+                            .classList
+                            .add(
+                                "earned"
+                            );
+                    },
+                    300
+                );
+            }
+        }
+
+
+        function showStepPanels(step) {
+
+            if (step.results) {
+
+                const results =
+                    document.getElementById(
+                        step.results
+                    );
+
+                if (results) {
+                    results.classList.add(
+                        "visible"
+                    );
+                }
+            }
+
+            if (step.decision) {
+
+                const decision =
+                    document.getElementById(
+                        step.decision
+                    );
+
+                if (decision) {
+                    decision.classList.add(
+                        "visible"
+                    );
+                }
+            }
+
+            if (step.reward) {
+                awardReward(
+                    step.reward
+                );
+            }
+        }
+
+
+        /* ==========================================================
+           TYPE DIALOGUE
+           ========================================================== */
+
+        function typeDialogue(
+            text,
+            onComplete
+        ) {
+
+            window.clearTimeout(
+                typingTimer
+            );
+
+            isTyping = true;
+
+            dialogueText.innerHTML =
+                '<span class="typing-cursor"></span>';
+
+            let index = 0;
+
+            function typeNextCharacter() {
+
+                if (
+                    index
+                    >= text.length
+                ) {
+                    isTyping = false;
+
+                    dialogueText.textContent =
+                        text;
+
+                    window.setTimeout(
+                        onComplete,
+                        AFTER_BUBBLE_PAUSE
+                    );
+
+                    return;
+                }
+
+                const visibleText =
+                    text.slice(
+                        0,
+                        index + 1
+                    );
+
+                dialogueText.innerHTML =
+                    visibleText
+                    + '<span class="typing-cursor"></span>';
+
+                index += 1;
+
+                typingTimer =
+                    window.setTimeout(
+                        typeNextCharacter,
+                        TYPING_SPEED
+                    );
+            }
+
+            typeNextCharacter();
+        }
+
+
+        /* ==========================================================
+           RENDER STEP
+           ========================================================== */
+
+        function renderStep() {
+
+            const step =
+                reviewSteps[
+                    currentStep
+                ];
+
+            if (!step) {
+                completeReview();
+                return;
+            }
+
+            hideAllPanels();
+
+            nextButton.classList.remove(
+                "visible"
+            );
+
+            setActivePerson(
+                step.person
+            );
+
+            speakerImage.src =
+                step.image;
+
+            speakerName.textContent =
+                step.name;
+
+            speakerTitle.textContent =
+                step.title;
+
+            typeDialogue(
+                step.text,
+                function () {
+
+                    showStepPanels(
+                        step
+                    );
+
+                    nextButton.textContent =
+                        step.button;
+
+                    nextButton.classList.add(
+                        "visible"
+                    );
+                }
+            );
+        }
+
+
+        /* ==========================================================
+           COMPLETE REVIEW
+           ========================================================== */
+
+        function completeReview() {
+
+            boardStage.style.display =
+                "none";
+
+            finalSummary.classList.add(
+                "visible"
+            );
+
+            finalSummary.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+
+        /* ==========================================================
+           NEXT
+           ========================================================== */
+
+        nextButton.addEventListener(
+            "click",
+            function () {
+
+                if (isTyping) {
+                    return;
+                }
+
+                currentStep += 1;
+
+                renderStep();
+            }
+        );
+
+
+        /* ==========================================================
+           RESET MODAL
+           ========================================================== */
+
+        const modal =
+            document.getElementById(
+                "resetYearModal"
+            );
+
+        const openButton =
+            document.querySelector(
+                "[data-open-reset-modal]"
+            );
+
+        const closeButtons =
+            document.querySelectorAll(
+                "[data-close-reset-modal]"
+            );
+
+
+        function openModal() {
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add(
+                "is-open"
+            );
+
+            modal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.style.overflow =
+                "hidden";
+        }
+
+
+        function closeModal() {
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.remove(
+                "is-open"
+            );
+
+            modal.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.style.overflow =
+                "";
+        }
+
+
+        if (openButton) {
+
+            openButton.addEventListener(
+                "click",
+                openModal
+            );
+        }
+
+
+        closeButtons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    closeModal
+                );
+            }
+        );
+
+
+        if (modal) {
+
+            modal.addEventListener(
+                "click",
+                function (event) {
+
+                    if (
+                        event.target
+                        === modal
+                    ) {
+                        closeModal();
+                    }
+                }
+            );
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key
+                    === "Escape"
+                ) {
+                    closeModal();
+                    closeRestartModal();
+                }
+            }
+        );
+
+
+        /* ==========================================================
+           START-OVER MODAL
+           ========================================================== */
+
+        const restartModal =
+            document.getElementById(
+                "restartSimulationModal"
+            );
+
+        const openRestartButton =
+            document.querySelector(
+                "[data-open-restart-modal]"
+            );
+
+        const closeRestartButtons =
+            document.querySelectorAll(
+                "[data-close-restart-modal]"
+            );
+
+
+        function openRestartModal() {
+
+            if (!restartModal) {
+                return;
+            }
+
+            restartModal.classList.add(
+                "is-open"
+            );
+
+            restartModal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.style.overflow =
+                "hidden";
+        }
+
+
+        function closeRestartModal() {
+
+            if (!restartModal) {
+                return;
+            }
+
+            restartModal.classList.remove(
+                "is-open"
+            );
+
+            restartModal.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.style.overflow =
+                "";
+        }
+
+
+        if (openRestartButton) {
+
+            openRestartButton.addEventListener(
+                "click",
+                openRestartModal
+            );
+        }
+
+
+        closeRestartButtons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    closeRestartModal
+                );
+            }
+        );
+
+
+        if (restartModal) {
+
+            restartModal.addEventListener(
+                "click",
+                function (event) {
+
+                    if (
+                        event.target
+                        === restartModal
+                    ) {
+                        closeRestartModal();
+                    }
+                }
+            );
+        }
+
+
+        /* ==========================================================
+           START AOP PERFORMANCE REVIEW
+           ========================================================== */
+
+        renderStep();
+
+    }
+);
+
+</script>
+{% endblock %}

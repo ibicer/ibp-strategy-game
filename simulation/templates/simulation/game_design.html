@@ -1,0 +1,1128 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Design Simulation | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .design-page {
+        min-height: calc(100vh - 70px);
+        padding: 42px 28px 64px;
+
+        background:
+            radial-gradient(
+                circle at 9% 4%,
+                rgba(109, 165, 151, 0.10),
+                transparent 28%
+            ),
+            linear-gradient(
+                180deg,
+                #f6f9f8 0%,
+                #edf3f1 100%
+            );
+    }
+
+    .design-shell {
+        width: min(100%, 1320px);
+        margin: 0 auto;
+    }
+
+    /* ==============================================================
+       HEADER
+       ============================================================== */
+
+    .design-header {
+        position: relative;
+        overflow: hidden;
+
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) auto;
+        gap: 28px;
+        align-items: center;
+
+        margin-bottom: 24px;
+        padding: 36px 40px;
+
+        border: 1px solid rgba(21, 56, 65, 0.09);
+        border-radius: 24px;
+
+        background:
+            linear-gradient(
+                120deg,
+                rgba(14, 38, 50, 0.98) 0%,
+                rgba(30, 70, 74, 0.96) 62%,
+                rgba(67, 111, 102, 0.93) 100%
+            );
+
+        color: #ffffff;
+
+        box-shadow:
+            0 18px 48px rgba(20, 49, 57, 0.12),
+            0 4px 14px rgba(20, 49, 57, 0.05);
+    }
+
+    .design-header::after {
+        content: "";
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        right: -110px;
+        top: -170px;
+
+        border-radius: 50%;
+        background: rgba(183, 221, 210, 0.10);
+
+        pointer-events: none;
+    }
+
+    .design-header-copy,
+    .design-header-actions {
+        position: relative;
+        z-index: 2;
+    }
+
+    .design-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 19px;
+    }
+
+    .design-header-logo {
+        width: 88px;
+        height: auto;
+        display: block;
+    }
+
+    .design-header-kicker {
+        color: rgba(255, 255, 255, 0.64);
+
+        font-size: 0.69rem;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .design-title {
+        margin: 0;
+
+        font-size: clamp(2.1rem, 4vw, 3.9rem);
+        line-height: 1;
+        font-weight: 670;
+        letter-spacing: -0.042em;
+    }
+
+    .design-copy {
+        max-width: 760px;
+        margin: 16px 0 0;
+
+        color: rgba(255, 255, 255, 0.73);
+
+        font-size: 0.97rem;
+        line-height: 1.67;
+    }
+
+    .design-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 44px;
+        padding: 10px 15px;
+
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+
+        background: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+
+        font-size: 0.80rem;
+        font-weight: 740;
+        text-decoration: none;
+
+        transition:
+            transform 0.16s ease,
+            background 0.16s ease;
+    }
+
+    .design-back:hover {
+        background: rgba(255, 255, 255, 0.11);
+        transform: translateY(-1px);
+    }
+
+    /* ==============================================================
+       GRID
+       ============================================================== */
+
+    .design-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .design-panel {
+        overflow: hidden;
+
+        border: 1px solid rgba(24, 58, 65, 0.09);
+        border-radius: 20px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        box-shadow:
+            0 12px 32px rgba(25, 55, 61, 0.07),
+            0 2px 8px rgba(25, 55, 61, 0.035);
+    }
+
+    .design-panel-header {
+        padding: 24px 26px 20px;
+
+        border-bottom: 1px solid #e7eeeb;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #f8fbf9 100%
+            );
+    }
+
+    .design-panel-kicker {
+        margin-bottom: 5px;
+
+        color: #718480;
+
+        font-size: 0.67rem;
+        font-weight: 760;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .design-panel-title {
+        margin: 0;
+
+        color: #173740;
+
+        font-size: 1.35rem;
+        line-height: 1.2;
+        font-weight: 730;
+        letter-spacing: -0.025em;
+    }
+
+    .design-panel-copy {
+        margin: 8px 0 0;
+
+        color: #748385;
+
+        font-size: 0.84rem;
+        line-height: 1.56;
+    }
+
+    .design-panel-body {
+        padding: 26px;
+    }
+
+    /* ==============================================================
+       SETTINGS
+       ============================================================== */
+
+    .settings-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .setting-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: center;
+
+        padding: 17px 18px;
+
+        border: 1px solid #dfe8e5;
+        border-radius: 13px;
+
+        background: #f8fbf9;
+    }
+
+    .setting-copy strong {
+        display: block;
+
+        color: #29464d;
+
+        font-size: 0.87rem;
+        font-weight: 730;
+    }
+
+    .setting-copy span {
+        display: block;
+
+        margin-top: 4px;
+
+        color: #748382;
+
+        font-size: 0.75rem;
+        line-height: 1.5;
+    }
+
+    .setting-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .setting-control input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        accent-color: #4d8277;
+    }
+
+    .core-settings {
+        display: grid;
+        gap: 12px;
+
+        margin-top: 22px;
+        padding-top: 22px;
+
+        border-top: 1px solid #e5ece9;
+    }
+
+    .core-setting {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+
+        padding: 13px 14px;
+
+        border: 1px solid #dce8e3;
+        border-radius: 11px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #f1f7f4,
+                #f8fbf9
+            );
+    }
+
+    .core-setting-mark {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 28px;
+        height: 28px;
+
+        border-radius: 8px;
+
+        background: #e5f1ec;
+        color: #46776d;
+
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .core-setting strong {
+        display: block;
+
+        color: #355f59;
+
+        font-size: 0.80rem;
+        font-weight: 730;
+    }
+
+    .core-setting span {
+        display: block;
+        margin-top: 3px;
+
+        color: #71817e;
+
+        font-size: 0.73rem;
+        line-height: 1.46;
+    }
+
+    .design-alert {
+        margin-bottom: 20px;
+        padding: 13px 15px;
+
+        border: 1px solid #efd1d1;
+        border-radius: 10px;
+
+        background: #fff2f2;
+        color: #7d3535;
+
+        font-size: 0.83rem;
+        line-height: 1.5;
+    }
+
+    .design-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+
+        margin-top: 24px;
+        padding-top: 20px;
+
+        border-top: 1px solid #e7edeb;
+    }
+
+    .design-save,
+    .design-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 45px;
+        padding: 10px 16px;
+
+        border-radius: 10px;
+
+        font-size: 0.80rem;
+        font-weight: 750;
+        text-decoration: none;
+    }
+
+    .design-save {
+        border: 0;
+
+        background:
+            linear-gradient(
+                135deg,
+                #1e4b56,
+                #39776f
+            );
+
+        color: #ffffff;
+        cursor: pointer;
+
+        box-shadow:
+            0 9px 20px rgba(30, 75, 86, 0.18);
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease;
+    }
+
+    .design-save:hover {
+        transform: translateY(-1px);
+        box-shadow:
+            0 12px 25px rgba(30, 75, 86, 0.22);
+    }
+
+    .design-cancel {
+        border: 1px solid #d8e2df;
+        background: #ffffff;
+        color: #50686c;
+    }
+
+    /* ==============================================================
+       INVITE LINK
+       ============================================================== */
+
+    .invite-card {
+        padding: 18px;
+
+        border: 1px solid #dfe8e5;
+        border-radius: 14px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #f6faf8,
+                #eef5f2
+            );
+    }
+
+    .invite-card-label {
+        margin-bottom: 7px;
+
+        color: #758581;
+
+        font-size: 0.66rem;
+        font-weight: 760;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .invite-card-title {
+        margin: 0;
+
+        color: #28464d;
+
+        font-size: 1rem;
+        font-weight: 730;
+    }
+
+    .invite-card-copy {
+        margin: 7px 0 0;
+
+        color: #72817f;
+
+        font-size: 0.76rem;
+        line-height: 1.5;
+    }
+
+    .invite-url-wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: stretch;
+
+        margin-top: 15px;
+    }
+
+    .invite-url {
+        width: 100%;
+
+        padding: 11px 12px;
+
+        border: 1px solid #cfdcd8;
+        border-radius: 10px;
+
+        background: #ffffff;
+        color: #345258;
+
+        font-size: 0.78rem;
+        line-height: 1.35;
+
+        outline: none;
+    }
+
+    .copy-invite {
+        min-height: 44px;
+        padding: 10px 13px;
+
+        border: 0;
+        border-radius: 10px;
+
+        background: #214f59;
+        color: #ffffff;
+
+        cursor: pointer;
+
+        font-size: 0.75rem;
+        font-weight: 750;
+
+        transition:
+            transform 0.16s ease,
+            background 0.16s ease;
+    }
+
+    .copy-invite:hover {
+        transform: translateY(-1px);
+        background: #1b4650;
+    }
+
+    .copy-status {
+        min-height: 18px;
+        margin-top: 8px;
+
+        color: #4e7c72;
+
+        font-size: 0.71rem;
+        font-weight: 650;
+    }
+
+    .invite-guidance {
+        display: grid;
+        gap: 10px;
+
+        margin-top: 18px;
+    }
+
+    .invite-guidance-item {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+
+        padding: 12px 13px;
+
+        border-radius: 11px;
+
+        background: #f7faf8;
+        border: 1px solid #e2eae7;
+    }
+
+    .invite-guidance-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+
+        border-radius: 8px;
+
+        background: #e9f2ef;
+        color: #557a72;
+
+        font-size: 0.69rem;
+        font-weight: 800;
+    }
+
+    .invite-guidance-item strong {
+        display: block;
+
+        color: #35525a;
+
+        font-size: 0.77rem;
+    }
+
+    .invite-guidance-item span {
+        display: block;
+        margin-top: 3px;
+
+        color: #74827f;
+
+        font-size: 0.71rem;
+        line-height: 1.45;
+    }
+
+    .invite-note {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+
+        margin-top: 17px;
+        padding-top: 16px;
+
+        border-top: 1px solid #e5ece9;
+
+        color: #768481;
+
+        font-size: 0.72rem;
+        line-height: 1.48;
+    }
+
+    .invite-note-mark {
+        color: #4c7f73;
+        font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+        .design-header {
+            grid-template-columns: 1fr;
+        }
+
+        .design-header-actions {
+            justify-self: start;
+        }
+
+        .design-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .design-page {
+            padding: 24px 16px 44px;
+        }
+
+        .design-header {
+            padding: 28px 22px;
+            border-radius: 19px;
+        }
+
+        .design-panel-header,
+        .design-panel-body {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .setting-card {
+            grid-template-columns: 1fr;
+        }
+
+        .setting-control {
+            justify-content: flex-start;
+        }
+
+        .invite-url-wrap {
+            grid-template-columns: 1fr;
+        }
+
+        .design-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .design-save,
+        .design-cancel {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="design-page">
+
+    <div class="design-shell">
+
+        <!-- ======================================================
+             HEADER
+             ====================================================== -->
+
+        <header class="design-header">
+
+            <div class="design-header-copy">
+
+                <div class="design-header-brand">
+
+                    <img
+                        src="{% static 'simulation/logo/x_logo.png' %}"
+                        alt="X-Summit Bikes"
+                        class="design-header-logo"
+                    >
+
+                    <div class="design-header-kicker">
+                        Instructor Workspace
+                    </div>
+
+                </div>
+
+                <h1 class="design-title">
+                    Design the simulation experience
+                </h1>
+
+                <p class="design-copy">
+                    Configure the player retry options for
+                    <strong>{{ game.name }}</strong>. Core progression through
+                    Year 1, Year 2, and the final results summary remains
+                    protected so every participant completes the full
+                    Integrated Business Planning experience.
+                </p>
+
+            </div>
+
+
+            <div class="design-header-actions">
+
+                <a
+                    href="{% url 'instructor_workspace' %}"
+                    class="design-back"
+                >
+                    Return to Instructor Workspace
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- ======================================================
+             CONTENT
+             ====================================================== -->
+
+        <div class="design-grid">
+
+            <!-- ==================================================
+                 SETTINGS
+                 ================================================== -->
+
+            <section class="design-panel">
+
+                <div class="design-panel-header">
+
+                    <div class="design-panel-kicker">
+                        Player Decision Rights
+                    </div>
+
+                    <h2 class="design-panel-title">
+                        Configure retry permissions
+                    </h2>
+
+                    <p class="design-panel-copy">
+                        Choose which retry options participants may access
+                        after completing a year. These settings affect player
+                        flexibility but do not change the core simulation flow.
+                    </p>
+
+                </div>
+
+
+                <div class="design-panel-body">
+
+                    {% if form.non_field_errors %}
+
+                        <div
+                            class="design-alert"
+                            role="alert"
+                        >
+                            {{ form.non_field_errors }}
+                        </div>
+
+                    {% endif %}
+
+
+                    <form method="post" novalidate>
+
+                        {% csrf_token %}
+
+
+                        <div class="settings-list">
+
+                            <div class="setting-card">
+
+                                <div class="setting-copy">
+
+                                    <strong>
+                                        {{ form.allow_redo_year_1.label }}
+                                    </strong>
+
+                                    <span>
+                                        {{ form.allow_redo_year_1.help_text }}
+                                    </span>
+
+                                    {{ form.allow_redo_year_1.errors }}
+
+                                </div>
+
+                                <div class="setting-control">
+                                    {{ form.allow_redo_year_1 }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="setting-card">
+
+                                <div class="setting-copy">
+
+                                    <strong>
+                                        {{ form.allow_redo_year_2.label }}
+                                    </strong>
+
+                                    <span>
+                                        {{ form.allow_redo_year_2.help_text }}
+                                    </span>
+
+                                    {{ form.allow_redo_year_2.errors }}
+
+                                </div>
+
+                                <div class="setting-control">
+                                    {{ form.allow_redo_year_2 }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="setting-card">
+
+                                <div class="setting-copy">
+
+                                    <strong>
+                                        {{ form.allow_full_restart.label }}
+                                    </strong>
+
+                                    <span>
+                                        {{ form.allow_full_restart.help_text }}
+                                    </span>
+
+                                    {{ form.allow_full_restart.errors }}
+
+                                </div>
+
+                                <div class="setting-control">
+                                    {{ form.allow_full_restart }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="core-settings">
+
+                            <div class="core-setting">
+
+                                <div class="core-setting-mark">
+                                    ✓
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        Continue to Year 2
+                                    </strong>
+
+                                    <span>
+                                        Always available after the required
+                                        Year 1 review is completed.
+                                    </span>
+                                </div>
+
+                            </div>
+
+
+                            <div class="core-setting">
+
+                                <div class="core-setting-mark">
+                                    ✓
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        Summarize Results
+                                    </strong>
+
+                                    <span>
+                                        Always available after all configured
+                                        simulation years are completed.
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="design-actions">
+
+                            <button
+                                type="submit"
+                                class="design-save"
+                            >
+                                Save Simulation Design
+                            </button>
+
+                            <a
+                                href="{% url 'admin_game_dashboard' code=game.code %}"
+                                class="design-cancel"
+                            >
+                                Open Instructor Dashboard
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==================================================
+                 INVITATION
+                 ================================================== -->
+
+            <aside class="design-panel">
+
+                <div class="design-panel-header">
+
+                    <div class="design-panel-kicker">
+                        Participant Invitation
+                    </div>
+
+                    <h2 class="design-panel-title">
+                        Share the private game link
+                    </h2>
+
+                    <p class="design-panel-copy">
+                        This invitation is unique to
+                        <strong>{{ game.name }}</strong>. Participants who
+                        open it can create a player account or sign in to an
+                        existing player account and join automatically.
+                    </p>
+
+                </div>
+
+
+                <div class="design-panel-body">
+
+                    <div class="invite-card">
+
+                        <div class="invite-card-label">
+                            Private Invitation Link
+                        </div>
+
+                        <h3 class="invite-card-title">
+                            {{ game.name }}
+                        </h3>
+
+                        <p class="invite-card-copy">
+                            Copy this link into Canvas, Moodle, Blackboard,
+                            Teams, email, or another private course channel.
+                        </p>
+
+
+                        <div class="invite-url-wrap">
+
+                            <input
+                                type="text"
+                                value="{{ invite_url }}"
+                                id="invite-url"
+                                class="invite-url"
+                                readonly
+                                aria-label="Private simulation invitation link"
+                            >
+
+                            <button
+                                type="button"
+                                class="copy-invite"
+                                id="copy-invite"
+                            >
+                                Copy Invite Link
+                            </button>
+
+                        </div>
+
+                        <div
+                            class="copy-status"
+                            id="copy-status"
+                            aria-live="polite"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="invite-guidance">
+
+                        <div class="invite-guidance-item">
+
+                            <div class="invite-guidance-number">
+                                01
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Share privately
+                                </strong>
+
+                                <span>
+                                    Distribute the link only to participants
+                                    who should have access to this simulation.
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="invite-guidance-item">
+
+                            <div class="invite-guidance-number">
+                                02
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Registration is automatic
+                                </strong>
+
+                                <span>
+                                    New participants create a player account.
+                                    Existing players can sign in and join
+                                    directly through the same invitation.
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="invite-guidance-item">
+
+                            <div class="invite-guidance-number">
+                                03
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Monitor from your dashboard
+                                </strong>
+
+                                <span>
+                                    Registered participants, progress, results,
+                                    and cohort statistics appear in the
+                                    instructor dashboard.
+                                </span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="invite-note">
+
+                        <span class="invite-note-mark">
+                            ✓
+                        </span>
+
+                        <span>
+                            The invitation link identifies the simulation.
+                            Participants do not need to enter a separate game
+                            code.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const copyButton = document.getElementById("copy-invite");
+        const inviteInput = document.getElementById("invite-url");
+        const copyStatus = document.getElementById("copy-status");
+
+        if (!copyButton || !inviteInput) {
+            return;
+        }
+
+        copyButton.addEventListener("click", async function () {
+            const inviteUrl = inviteInput.value;
+
+            try {
+                if (
+                    navigator.clipboard
+                    && window.isSecureContext
+                ) {
+                    await navigator.clipboard.writeText(inviteUrl);
+                } else {
+                    inviteInput.focus();
+                    inviteInput.select();
+                    inviteInput.setSelectionRange(
+                        0,
+                        inviteInput.value.length
+                    );
+
+                    document.execCommand("copy");
+
+                    window.getSelection().removeAllRanges();
+                }
+
+                copyButton.textContent = "Copied";
+                copyStatus.textContent =
+                    "Invitation link copied to your clipboard.";
+
+                window.setTimeout(function () {
+                    copyButton.textContent = "Copy Invite Link";
+                    copyStatus.textContent = "";
+                }, 2500);
+
+            } catch (error) {
+                inviteInput.focus();
+                inviteInput.select();
+
+                copyStatus.textContent =
+                    "Select the link above and copy it manually.";
+            }
+        });
+    });
+</script>
+
+{% endblock %}

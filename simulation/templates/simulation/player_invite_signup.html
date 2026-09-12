@@ -1,0 +1,953 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Join {{ game.name }} | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .invite-shell {
+        min-height: calc(100vh - 70px);
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        background: #eef3f1;
+    }
+
+    /* ==============================================================
+       LEFT — SIMULATION EXPERIENCE
+       ============================================================== */
+
+    .invite-brand-side {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: calc(100vh - 70px);
+        padding: 60px 64px 52px;
+        color: #ffffff;
+
+        background:
+            linear-gradient(
+                115deg,
+                rgba(9, 28, 41, 0.94) 0%,
+                rgba(18, 47, 57, 0.80) 47%,
+                rgba(32, 70, 73, 0.66) 100%
+            ),
+            url("{% static 'simulation/login/alpine_trail.png' %}")
+            center center / cover no-repeat;
+    }
+
+    .invite-brand-side::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+
+        background:
+            radial-gradient(
+                circle at 72% 22%,
+                rgba(178, 220, 207, 0.18),
+                transparent 34%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 55%,
+                rgba(4, 17, 26, 0.30)
+            );
+
+        pointer-events: none;
+    }
+
+    .invite-brand-content,
+    .invite-brand-footer {
+        position: relative;
+        z-index: 2;
+    }
+
+    .invite-logo {
+        display: block;
+        width: 160px;
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 36px;
+    }
+
+    .invite-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+
+        margin-bottom: 18px;
+        padding: 7px 11px;
+
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(8px);
+
+        color: rgba(255, 255, 255, 0.82);
+
+        font-size: 0.70rem;
+        line-height: 1;
+        font-weight: 750;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .invite-kicker-dot {
+        width: 7px;
+        height: 7px;
+        flex: 0 0 7px;
+
+        border-radius: 50%;
+        background: #a8d9c5;
+
+        box-shadow:
+            0 0 0 4px rgba(168, 217, 197, 0.10);
+    }
+
+    .invite-heading {
+        max-width: 650px;
+        margin: 0;
+
+        font-size: clamp(2.8rem, 4.8vw, 5.1rem);
+        line-height: 0.96;
+        font-weight: 650;
+        letter-spacing: -0.05em;
+    }
+
+    .invite-game-card {
+        width: min(100%, 590px);
+
+        margin-top: 32px;
+        padding: 19px 21px;
+
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 15px;
+
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(11px);
+
+        box-shadow:
+            0 16px 40px rgba(2, 16, 24, 0.12);
+    }
+
+    .invite-game-label {
+        margin-bottom: 6px;
+
+        color: rgba(255, 255, 255, 0.56);
+
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .invite-game-name {
+        margin: 0;
+
+        font-size: 1.23rem;
+        line-height: 1.35;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .invite-game-description {
+        margin: 8px 0 0;
+
+        font-size: 0.86rem;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.66);
+    }
+
+    .invite-copy {
+        max-width: 640px;
+        margin-top: 28px;
+
+        font-size: 1.03rem;
+        line-height: 1.72;
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .challenge-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+
+        width: min(100%, 700px);
+        margin-top: 38px;
+
+        border-top: 1px solid rgba(255, 255, 255, 0.19);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.19);
+    }
+
+    .challenge-item {
+        padding: 15px 13px;
+        text-align: center;
+
+        border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .challenge-item:first-child {
+        padding-left: 0;
+    }
+
+    .challenge-item:last-child {
+        border-right: 0;
+    }
+
+    .challenge-item strong {
+        display: block;
+
+        color: #ffffff;
+
+        font-size: 0.80rem;
+        font-weight: 700;
+    }
+
+    .challenge-item span {
+        display: block;
+        margin-top: 3px;
+
+        color: rgba(255, 255, 255, 0.48);
+
+        font-size: 0.67rem;
+        line-height: 1.35;
+    }
+
+    .invite-brand-footer {
+        margin-top: 48px;
+    }
+
+    .invite-school-logo {
+        display: block;
+
+        width: 245px;
+        max-width: 100%;
+        height: auto;
+    }
+
+
+    /* ==============================================================
+       RIGHT — PLAYER REGISTRATION
+       ============================================================== */
+
+    .invite-form-side {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 52px 42px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #f7faf8 0%,
+                #edf3f0 100%
+            );
+    }
+
+    .invite-form-wrap {
+        width: min(100%, 600px);
+
+        padding: 38px 38px 34px;
+
+        border: 1px solid rgba(21, 55, 62, 0.08);
+        border-radius: 24px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        box-shadow:
+            0 22px 60px rgba(17, 47, 53, 0.10),
+            0 4px 14px rgba(17, 47, 53, 0.045);
+
+        backdrop-filter: blur(12px);
+    }
+
+    .player-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        margin-bottom: 17px;
+    }
+
+    .player-step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+
+        border-radius: 50%;
+
+        background: #e7f2ee;
+        color: #285d60;
+
+        font-size: 0.76rem;
+        font-weight: 800;
+    }
+
+    .player-step-text {
+        color: #718184;
+
+        font-size: 0.73rem;
+        font-weight: 750;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+    }
+
+    .invite-form-heading {
+        margin: 0;
+
+        color: #15343d;
+
+        font-size: 2.05rem;
+        line-height: 1.08;
+        font-weight: 700;
+        letter-spacing: -0.038em;
+    }
+
+    .invite-form-intro {
+        margin: 12px 0 27px;
+
+        color: #697b7e;
+
+        font-size: 0.94rem;
+        line-height: 1.62;
+    }
+
+    .registration-game {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+
+        margin-bottom: 27px;
+        padding: 13px 14px;
+
+        border: 1px solid #dde8e4;
+        border-radius: 12px;
+
+        background: #f4f8f6;
+    }
+
+    .registration-game-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 37px;
+        height: 37px;
+        flex: 0 0 37px;
+
+        border-radius: 9px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #244d59,
+                #3c7e78
+            );
+
+        color: white;
+
+        font-size: 0.86rem;
+        font-weight: 800;
+    }
+
+    .registration-game-copy {
+        min-width: 0;
+    }
+
+    .registration-game-copy small {
+        display: block;
+
+        margin-bottom: 2px;
+
+        color: #899695;
+
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+    }
+
+    .registration-game-copy strong {
+        display: block;
+
+        overflow: hidden;
+
+        color: #29464d;
+
+        font-size: 0.88rem;
+        font-weight: 700;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .invite-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 17px;
+    }
+
+    .invite-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .invite-field.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .invite-field label {
+        color: #29464d;
+
+        font-size: 0.79rem;
+        font-weight: 700;
+    }
+
+    .invite-field input {
+        width: 100%;
+        min-height: 48px;
+
+        padding: 11px 13px;
+
+        border: 1px solid #ccd9d6;
+        border-radius: 11px;
+
+        outline: none;
+        background: #fbfdfc;
+
+        color: #173239;
+
+        font-size: 0.94rem;
+
+        transition:
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
+            background 0.18s ease;
+    }
+
+    .invite-field input:focus {
+        border-color: #6da79d;
+        background: #ffffff;
+
+        box-shadow:
+            0 0 0 4px rgba(109, 167, 157, 0.13);
+    }
+
+    .invite-field ul.errorlist {
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+
+        color: #9b3e3e;
+
+        font-size: 0.77rem;
+        line-height: 1.4;
+    }
+
+    .invite-alert {
+        margin-bottom: 22px;
+        padding: 13px 15px;
+
+        border: 1px solid #efd2d2;
+        border-radius: 11px;
+
+        background: #fff2f2;
+        color: #823737;
+
+        font-size: 0.84rem;
+        line-height: 1.5;
+    }
+
+    .invite-submit {
+        position: relative;
+
+        width: 100%;
+        min-height: 54px;
+
+        margin-top: 26px;
+        padding: 13px 20px;
+
+        border: 0;
+        border-radius: 12px;
+
+        cursor: pointer;
+
+        background:
+            linear-gradient(
+                135deg,
+                #173d4a 0%,
+                #296a6c 62%,
+                #4d8c7d 100%
+            );
+
+        color: #ffffff;
+
+        font-size: 0.98rem;
+        font-weight: 750;
+        letter-spacing: 0.01em;
+
+        box-shadow:
+            0 12px 26px rgba(29, 78, 82, 0.22);
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease;
+    }
+
+    .invite-submit:hover {
+        transform: translateY(-1px);
+
+        box-shadow:
+            0 16px 31px rgba(29, 78, 82, 0.27);
+    }
+
+    .invite-submit:active {
+        transform: translateY(0);
+    }
+
+    .invite-access-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+
+        margin-top: 17px;
+        padding: 11px 13px;
+
+        border-radius: 10px;
+
+        background: #f1f6f4;
+
+        color: #687b7d;
+
+        font-size: 0.76rem;
+        line-height: 1.5;
+    }
+
+    .invite-access-check {
+        flex: 0 0 auto;
+
+        color: #3e7b70;
+        font-weight: 800;
+    }
+
+    .invite-login {
+        margin-top: 23px;
+        padding-top: 20px;
+
+        border-top: 1px solid #e5ece9;
+
+        text-align: center;
+
+        color: #748386;
+
+        font-size: 0.84rem;
+    }
+
+    .invite-login a {
+        color: #2f6868;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .invite-login a:hover {
+        text-decoration: underline;
+    }
+
+
+    /* ==============================================================
+       RESPONSIVE
+       ============================================================== */
+
+    @media (max-width: 1030px) {
+        .invite-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .invite-brand-side {
+            min-height: auto;
+            padding: 44px 32px 40px;
+        }
+
+        .invite-form-side {
+            padding: 42px 22px 52px;
+        }
+
+        .challenge-strip {
+            max-width: 650px;
+        }
+
+        .invite-brand-footer {
+            margin-top: 35px;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .invite-brand-side {
+            padding: 32px 21px;
+        }
+
+        .invite-logo {
+            width: 126px;
+            margin-bottom: 27px;
+        }
+
+        .invite-heading {
+            font-size: 2.65rem;
+        }
+
+        .challenge-strip {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .challenge-item:nth-child(2) {
+            border-right: 0;
+        }
+
+        .challenge-item:nth-child(-n+2) {
+            border-bottom:
+                1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .invite-school-logo {
+            width: 215px;
+        }
+
+        .invite-form-wrap {
+            padding: 28px 20px 26px;
+            border-radius: 18px;
+        }
+
+        .invite-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .invite-field.full-width {
+            grid-column: auto;
+        }
+    }
+</style>
+
+
+<div class="invite-shell">
+
+    <!-- ==========================================================
+         SIMULATION INVITATION
+         ========================================================== -->
+
+    <section class="invite-brand-side">
+
+        <div class="invite-brand-content">
+
+            <img
+                src="{% static 'simulation/logo/x_logo.png' %}"
+                alt="X-Summit Bikes"
+                class="invite-logo"
+            >
+
+            <div class="invite-kicker">
+                <span class="invite-kicker-dot"></span>
+                Private Simulation Invitation
+            </div>
+
+            <h1 class="invite-heading">
+                You have been invited to take the lead.
+            </h1>
+
+
+            <div class="invite-game-card">
+
+                <div class="invite-game-label">
+                    Your Simulation
+                </div>
+
+                <h2 class="invite-game-name">
+                    {{ game.name }}
+                </h2>
+
+                {% if game.description %}
+                    <p class="invite-game-description">
+                        {{ game.description }}
+                    </p>
+                {% endif %}
+
+            </div>
+
+
+            <p class="invite-copy">
+                Step into the management team of X-Summit Bikes and take
+                responsibility for an integrated business plan. Your pricing,
+                inventory, operating, and financial decisions will interact
+                throughout the simulation. The challenge is not simply to
+                maximize profit—it is to build a coordinated plan that
+                delivers performance with financial discipline.
+            </p>
+
+
+            <div class="challenge-strip">
+
+                <div class="challenge-item">
+                    <strong>Demand</strong>
+                    <span>
+                        Interpret changing market information
+                    </span>
+                </div>
+
+                <div class="challenge-item">
+                    <strong>Pricing</strong>
+                    <span>
+                        Shape demand without losing discipline
+                    </span>
+                </div>
+
+                <div class="challenge-item">
+                    <strong>Inventory</strong>
+                    <span>
+                        Balance availability and capital exposure
+                    </span>
+                </div>
+
+                <div class="challenge-item">
+                    <strong>Finance</strong>
+                    <span>
+                        Deliver results within commitments
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="invite-brand-footer">
+
+            <img
+                src="{% static 'simulation/logo/schulich_logo.png' %}"
+                alt="Schulich School of Business, York University"
+                class="invite-school-logo"
+            >
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         PLAYER REGISTRATION
+         ========================================================== -->
+
+    <section class="invite-form-side">
+
+        <div class="invite-form-wrap">
+
+            <div class="player-step">
+
+                <div class="player-step-number">
+                    01
+                </div>
+
+                <div class="player-step-text">
+                    Create Player Account
+                </div>
+
+            </div>
+
+
+            <h2 class="invite-form-heading">
+                Join the challenge.
+            </h2>
+
+            <p class="invite-form-intro">
+                Create your player account below. Your invitation is already
+                connected to the correct simulation, so you can begin
+                immediately after registration.
+            </p>
+
+
+            <div class="registration-game">
+
+                <div
+                    class="registration-game-icon"
+                    aria-hidden="true"
+                >
+                    X
+                </div>
+
+                <div class="registration-game-copy">
+
+                    <small>
+                        Joining
+                    </small>
+
+                    <strong>
+                        {{ game.name }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            {% if form.non_field_errors %}
+                <div
+                    class="invite-alert"
+                    role="alert"
+                >
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+
+            <form
+                method="post"
+                novalidate
+            >
+
+                {% csrf_token %}
+
+
+                <div class="invite-grid">
+
+                    <div class="invite-field">
+
+                        <label
+                            for="{{ form.first_name.id_for_label }}"
+                        >
+                            First Name
+                        </label>
+
+                        {{ form.first_name }}
+
+                        {{ form.first_name.errors }}
+
+                    </div>
+
+
+                    <div class="invite-field">
+
+                        <label
+                            for="{{ form.last_name.id_for_label }}"
+                        >
+                            Surname
+                        </label>
+
+                        {{ form.last_name }}
+
+                        {{ form.last_name.errors }}
+
+                    </div>
+
+
+                    <div class="invite-field full-width">
+
+                        <label
+                            for="{{ form.email.id_for_label }}"
+                        >
+                            Email Address
+                        </label>
+
+                        {{ form.email }}
+
+                        {{ form.email.errors }}
+
+                    </div>
+
+
+                    <div class="invite-field full-width">
+
+                        <label
+                            for="{{ form.username.id_for_label }}"
+                        >
+                            Username
+                        </label>
+
+                        {{ form.username }}
+
+                        {{ form.username.errors }}
+
+                    </div>
+
+
+                    <div class="invite-field">
+
+                        <label
+                            for="{{ form.password1.id_for_label }}"
+                        >
+                            Password
+                        </label>
+
+                        {{ form.password1 }}
+
+                        {{ form.password1.errors }}
+
+                    </div>
+
+
+                    <div class="invite-field">
+
+                        <label
+                            for="{{ form.password2.id_for_label }}"
+                        >
+                            Confirm Password
+                        </label>
+
+                        {{ form.password2 }}
+
+                        {{ form.password2.errors }}
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="invite-submit"
+                >
+                    Join Simulation
+                </button>
+
+            </form>
+
+
+            <div class="invite-access-note">
+
+                <span class="invite-access-check">
+                    ✓
+                </span>
+
+                <span>
+                    This invitation automatically connects your account
+                    to <strong>{{ game.name }}</strong>. You do not need
+                    a separate game code.
+                </span>
+
+            </div>
+
+
+            <div class="invite-login">
+                Already have an account?
+
+                <a
+                    href="{% url 'login' %}?next={% url 'player_invite_signup' invite_token=invite_token %}"
+                >
+                    Sign in to Join
+                </a>
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}

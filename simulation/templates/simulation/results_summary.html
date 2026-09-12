@@ -1,0 +1,1657 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+    Two-Year Results Summary | {{ game.name }}
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+
+    /* ==========================================================
+       TWO-YEAR RESULTS SUMMARY
+       ========================================================== */
+
+    .summary-shell {
+        max-width: 1220px;
+        margin: 0 auto;
+    }
+
+
+    /* ==========================================================
+       HERO
+       ========================================================== */
+
+    .summary-hero {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(30px, 5vw, 56px);
+        border-radius: 28px;
+        color: #ffffff;
+        background:
+            radial-gradient(
+                circle at 88% 8%,
+                rgba(214,169,77,.20),
+                transparent 30%
+            ),
+            radial-gradient(
+                circle at 8% 100%,
+                rgba(72,196,187,.16),
+                transparent 34%
+            ),
+            linear-gradient(
+                145deg,
+                #07131f,
+                #123149 55%,
+                #0e5f62
+            );
+        box-shadow: var(--shadow-lg);
+    }
+
+    .summary-hero-grid {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1fr)
+            280px;
+        gap: 34px;
+        align-items: center;
+    }
+
+    .summary-hero h1 {
+        max-width: 820px;
+        margin: 8px 0 14px;
+        font-size: clamp(2.5rem, 5vw, 4.8rem);
+        line-height: .98;
+        letter-spacing: -.055em;
+    }
+
+    .summary-hero-copy {
+        max-width: 760px;
+        margin: 0;
+        color: rgba(255,255,255,.70);
+        font-size: 1rem;
+        line-height: 1.75;
+    }
+
+    .summary-scorecard {
+        padding: 21px;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,.13);
+        border-radius: 22px;
+        background: rgba(255,255,255,.06);
+        backdrop-filter: blur(12px);
+    }
+
+    .summary-scorecard small {
+        display: block;
+        margin-bottom: 7px;
+        color: rgba(255,255,255,.55);
+        font-size: .65rem;
+        font-weight: 850;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+    }
+
+    .summary-scorecard strong {
+        display: block;
+        color: #f5ce68;
+        font-size: 3.1rem;
+        line-height: 1;
+        letter-spacing: -.05em;
+    }
+
+    .summary-scorecard span {
+        display: block;
+        margin-top: 9px;
+        color: rgba(255,255,255,.62);
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+
+    /* ==========================================================
+       SECTION
+       ========================================================== */
+
+    .summary-section {
+        margin-top: 24px;
+        padding: clamp(22px, 4vw, 34px);
+        border: 1px solid rgba(21,63,55,.09);
+        border-radius: 24px;
+        background: rgba(255,255,255,.92);
+        box-shadow: var(--shadow-md);
+    }
+
+    .section-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 22px;
+    }
+
+    .section-heading h2 {
+        margin: 4px 0 0;
+        color: var(--navy);
+        font-size: clamp(1.55rem, 3vw, 2.3rem);
+        letter-spacing: -.035em;
+    }
+
+    .section-heading p {
+        max-width: 600px;
+        margin: 0;
+        color: var(--muted);
+        font-size: .85rem;
+        line-height: 1.6;
+    }
+
+    .section-kicker {
+        color: var(--teal);
+        font-size: .64rem;
+        font-weight: 900;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+    }
+
+
+    /* ==========================================================
+       YEAR HEADERS
+       ========================================================== */
+
+    .year-comparison {
+        display: grid;
+        grid-template-columns:
+            220px
+            repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .year-column-heading {
+        padding: 18px;
+        border-radius: 17px;
+        color: #ffffff;
+        background:
+            linear-gradient(
+                145deg,
+                #153f43,
+                #246f6d
+            );
+    }
+
+    .year-column-heading.year-two {
+        background:
+            linear-gradient(
+                145deg,
+                #172d46,
+                #315a78
+            );
+    }
+
+    .year-column-heading small {
+        display: block;
+        margin-bottom: 4px;
+        color: rgba(255,255,255,.62);
+        font-size: .62rem;
+        font-weight: 850;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+    }
+
+    .year-column-heading strong {
+        font-size: 1.25rem;
+    }
+
+    .comparison-label-spacer {
+        background: transparent;
+    }
+
+
+    /* ==========================================================
+       COMPARISON ROWS
+       ========================================================== */
+
+    .comparison-label {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 15px 16px;
+        border-radius: 14px;
+        background: #f2f6f5;
+    }
+
+    .comparison-label strong {
+        color: #263b37;
+        font-size: .84rem;
+    }
+
+    .comparison-label span {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: .67rem;
+        line-height: 1.4;
+    }
+
+    .comparison-value {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 72px;
+        padding: 15px 17px;
+        border: 1px solid rgba(21,63,55,.08);
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .comparison-value strong {
+        color: #163b37;
+        font-size: 1.12rem;
+        letter-spacing: -.025em;
+    }
+
+    .comparison-value small {
+        color: var(--muted);
+        font-size: .65rem;
+        text-align: right;
+    }
+
+    .comparison-value.highlight {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(231,247,243,.92),
+                #ffffff
+            );
+    }
+
+
+    /* ==========================================================
+       STATUS BADGES
+       ========================================================== */
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-size: .61rem;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .status-badge.good {
+        color: #176d64;
+        border: 1px solid rgba(23,109,100,.18);
+        background: rgba(53,171,157,.10);
+    }
+
+    .status-badge.missed {
+        color: #955548;
+        border: 1px solid rgba(149,85,72,.17);
+        background: rgba(180,92,75,.08);
+    }
+
+    .status-badge.neutral {
+        color: #6c5a2d;
+        border: 1px solid rgba(157,126,54,.17);
+        background: rgba(214,169,77,.10);
+    }
+
+
+    /* ==========================================================
+       BOARD REWARD MATRIX
+       ========================================================== */
+
+    .reward-matrix {
+        display: grid;
+        grid-template-columns:
+            190px
+            repeat(2, minmax(0, 1fr));
+        gap: 11px;
+    }
+
+    .reward-matrix-head {
+        padding: 13px;
+        text-align: center;
+        color: #ffffff;
+        border-radius: 14px;
+        background: #173d49;
+        font-size: .78rem;
+        font-weight: 850;
+    }
+
+    .reward-matrix-label {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 14px;
+        border-radius: 14px;
+        background: #f2f6f5;
+    }
+
+    .board-mini-avatar {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(21,63,55,.10);
+    }
+
+    .reward-matrix-label strong {
+        display: block;
+        font-size: .80rem;
+    }
+
+    .reward-matrix-label span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: .65rem;
+    }
+
+    .reward-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 72px;
+        border: 1px solid rgba(21,63,55,.08);
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .reward-summary-r {
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        font-family: Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .reward-summary-r.earned {
+        color: #b88318;
+        border: 1px solid rgba(184,131,24,.34);
+        background: rgba(214,169,77,.12);
+        box-shadow: 0 0 20px rgba(214,169,77,.11);
+    }
+
+    .reward-summary-r.missed {
+        color: #b2bcbc;
+        border: 1px solid rgba(80,105,100,.12);
+        background: #f7f9f8;
+    }
+
+
+    /* ==========================================================
+       OPERATING INEFFICIENCY
+       ========================================================== */
+
+    .inefficiency-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+        gap: 13px;
+    }
+
+    .inefficiency-card {
+        padding: 18px;
+        border: 1px solid rgba(21,63,55,.08);
+        border-radius: 17px;
+        background:
+            linear-gradient(
+                145deg,
+                #fbfdfc,
+                #ffffff
+            );
+    }
+
+    .inefficiency-card small {
+        display: block;
+        min-height: 32px;
+        color: var(--muted);
+        font-size: .63rem;
+        font-weight: 850;
+        line-height: 1.35;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .inefficiency-values {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .inefficiency-year {
+        padding: 10px;
+        border-radius: 11px;
+        background: #f3f7f6;
+    }
+
+    .inefficiency-year span {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: .60rem;
+    }
+
+    .inefficiency-year strong {
+        color: #183c38;
+        font-size: .88rem;
+    }
+
+
+    /* ==========================================================
+       YEAR STORY CARDS
+       ========================================================== */
+
+    .story-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .story-card {
+        padding: 22px;
+        border-radius: 19px;
+    }
+
+    .story-card.year-one {
+        border: 1px solid rgba(40,126,117,.14);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(235,248,245,.95),
+                #ffffff
+            );
+    }
+
+    .story-card.year-two {
+        border: 1px solid rgba(54,94,133,.15);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(238,244,250,.96),
+                #ffffff
+            );
+    }
+
+    .story-card small {
+        color: var(--muted);
+        font-size: .63rem;
+        font-weight: 900;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+    }
+
+    .story-card h3 {
+        margin: 7px 0 9px;
+        color: var(--navy);
+        font-size: 1.22rem;
+    }
+
+    .story-card p {
+        margin: 0;
+        color: #4e625e;
+        font-size: .82rem;
+        line-height: 1.7;
+    }
+
+    .story-rewards {
+        margin-top: 15px;
+        color: var(--teal);
+        font-size: .75rem;
+        font-weight: 850;
+    }
+
+
+    /* ==========================================================
+       FINAL IBP MESSAGE
+       ========================================================== */
+
+    .ibp-conclusion {
+        position: relative;
+        overflow: hidden;
+        margin-top: 24px;
+        padding: clamp(28px, 5vw, 46px);
+        text-align: center;
+        border-radius: 25px;
+        color: #ffffff;
+        background:
+            radial-gradient(
+                circle at 50% 0,
+                rgba(214,169,77,.16),
+                transparent 32%
+            ),
+            linear-gradient(
+                145deg,
+                #0c1d29,
+                #173e49
+            );
+        box-shadow: var(--shadow-lg);
+    }
+
+    .ibp-conclusion h2 {
+        max-width: 850px;
+        margin: 8px auto 12px;
+        font-size: clamp(1.9rem, 4vw, 3.1rem);
+        line-height: 1.05;
+        letter-spacing: -.045em;
+    }
+
+    .ibp-conclusion p {
+        max-width: 780px;
+        margin: 0 auto;
+        color: rgba(255,255,255,.70);
+        font-size: .92rem;
+        line-height: 1.75;
+    }
+
+    .ibp-path {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .ibp-path-item {
+        padding: 9px 13px;
+        border: 1px solid rgba(255,255,255,.13);
+        border-radius: 999px;
+        background: rgba(255,255,255,.055);
+        color: rgba(255,255,255,.82);
+        font-size: .72rem;
+        font-weight: 800;
+    }
+
+    .ibp-arrow {
+        color: #f5ce68;
+        font-weight: 900;
+    }
+
+
+    /* ==========================================================
+       ACTIONS
+       ========================================================== */
+
+    .summary-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+
+    /* ==========================================================
+       RESPONSIVE
+       ========================================================== */
+
+    @media (max-width: 900px) {
+
+        .summary-hero-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-scorecard {
+            max-width: 360px;
+        }
+
+        .inefficiency-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+
+    @media (max-width: 720px) {
+
+        .year-comparison,
+        .reward-matrix {
+            grid-template-columns:
+                130px
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .story-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 560px) {
+
+        .year-comparison {
+            display: block;
+        }
+
+        .comparison-label-spacer,
+        .year-column-heading {
+            margin-bottom: 8px;
+        }
+
+        .comparison-label,
+        .comparison-value {
+            margin-bottom: 8px;
+        }
+
+        .reward-matrix {
+            grid-template-columns:
+                110px
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .inefficiency-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-heading {
+            display: block;
+        }
+
+        .section-heading p {
+            margin-top: 10px;
+        }
+
+    }
+
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="summary-shell">
+
+
+    <!-- ==========================================================
+         HERO
+         ========================================================== -->
+
+    <section class="summary-hero">
+
+        <div class="summary-hero-grid">
+
+            <div>
+
+                <div class="eyebrow">
+                    Integrated Business Planning
+                    · Simulation Complete
+                </div>
+
+                <h1>
+                    Two years.
+                    One integrated business.
+                </h1>
+
+                <p class="summary-hero-copy">
+                    You have completed both Annual Operating Plans
+                    and twenty-four monthly S&amp;OP cycles.
+                    This final review brings the two years together
+                    across financial performance, commercial execution,
+                    inventory discipline, and Board outcomes.
+                </p>
+
+            </div>
+
+
+            <div class="summary-scorecard">
+
+                <small>
+                    Total Board Rewards
+                </small>
+
+                <strong>
+                    {{ total_rewards_earned }}
+                    /
+                    {{ total_rewards_available }}
+                </strong>
+
+                <span>
+                    Financial, Commercial, and Operations
+                    rewards earned across both years
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         FINANCIAL PERFORMANCE
+         ========================================================== -->
+
+    <section class="summary-section">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-kicker">
+                    Financial Performance
+                </div>
+
+                <h2>
+                    AOP commitments versus actual results
+                </h2>
+            </div>
+
+            <p>
+                Compare the financial commitments established
+                during each Annual Operating Plan with the
+                results generated through monthly S&amp;OP execution.
+            </p>
+
+        </div>
+
+
+        <div class="year-comparison">
+
+            <div class="comparison-label-spacer"></div>
+
+            <div class="year-column-heading">
+                <small>Foundation</small>
+                <strong>Year 1</strong>
+            </div>
+
+            <div class="year-column-heading year-two">
+                <small>Expansion &amp; Adaptation</small>
+                <strong>Year 2</strong>
+            </div>
+
+
+            <!-- Revenue -->
+
+            <div class="comparison-label">
+                <strong>Revenue</strong>
+                <span>Actual annual revenue</span>
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_1.clarke.total_revenue|floatformat:0 }}
+                </strong>
+
+                {% if year_1.clarke.revenue_within_tolerance %}
+                    <span class="status-badge good">
+                        Within Board range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Below Board range
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_2.clarke.total_revenue|floatformat:0 }}
+                </strong>
+
+                {% if year_2.clarke.revenue_within_tolerance %}
+                    <span class="status-badge good">
+                        Within Board range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Below Board range
+                    </span>
+                {% endif %}
+            </div>
+
+
+            <!-- Revenue Target -->
+
+            <div class="comparison-label">
+                <strong>Revenue Target</strong>
+                <span>Official AOP commitment</span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_1.clarke.revenue_target|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_2.clarke.revenue_target|floatformat:0 }}
+                </strong>
+            </div>
+
+
+            <!-- Expense -->
+
+            <div class="comparison-label">
+                <strong>Total Expense</strong>
+                <span>
+                    COGS + overhead + write-off
+                </span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_1.clarke.total_expense|floatformat:0 }}
+                </strong>
+
+                {% if year_1.clarke.budget_within_tolerance %}
+                    <span class="status-badge good">
+                        Within range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Over range
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_2.clarke.total_expense|floatformat:0 }}
+                </strong>
+
+                {% if year_2.clarke.budget_within_tolerance %}
+                    <span class="status-badge good">
+                        Within range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Over range
+                    </span>
+                {% endif %}
+            </div>
+
+
+            <!-- Budget -->
+
+            <div class="comparison-label">
+                <strong>Operating Budget</strong>
+                <span>AOP operating commitment</span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_1.clarke.total_budget|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_2.clarke.total_budget|floatformat:0 }}
+                </strong>
+            </div>
+
+
+            <!-- Profit -->
+
+            <div class="comparison-label">
+                <strong>Profit</strong>
+                <span>
+                    Revenue − accounting operating expense
+                </span>
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_1.score.profit|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_2.score.profit|floatformat:0 }}
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         COMMERCIAL PERFORMANCE
+         ========================================================== -->
+
+    <section class="summary-section">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-kicker">
+                    Commercial Performance
+                </div>
+
+                <h2>
+                    Pricing flexibility and value capture
+                </h2>
+            </div>
+
+            <p>
+                Sales credit connects pricing authority with
+                commercial accountability. More flexibility does
+                not eliminate the obligation to preserve value.
+            </p>
+
+        </div>
+
+
+        <div class="year-comparison">
+
+            <div class="comparison-label-spacer"></div>
+
+            <div class="year-column-heading">
+                <small>Commercial Policy</small>
+                <strong>Year 1</strong>
+            </div>
+
+            <div class="year-column-heading year-two">
+                <small>Commercial Policy</small>
+                <strong>Year 2</strong>
+            </div>
+
+
+            <div class="comparison-label">
+                <strong>Sales Credit Policy</strong>
+                <span>Selected commercial flexibility</span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    {{ year_1.daniels.sales_credit_rate_percent|floatformat:0 }}%
+                </strong>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    {{ year_2.daniels.sales_credit_rate_percent|floatformat:0 }}%
+                </strong>
+            </div>
+
+
+            <div class="comparison-label">
+                <strong>Sales Credit Collected</strong>
+                <span>Commercial value preserved</span>
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_1.daniels.sales_credit_collected|floatformat:0 }}
+                </strong>
+
+                {% if year_1.daniels.sales_credit_within_tolerance %}
+                    <span class="status-badge good">
+                        Within Board range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Below Board range
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_2.daniels.sales_credit_collected|floatformat:0 }}
+                </strong>
+
+                {% if year_2.daniels.sales_credit_within_tolerance %}
+                    <span class="status-badge good">
+                        Within Board range
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Below Board range
+                    </span>
+                {% endif %}
+            </div>
+
+
+            <div class="comparison-label">
+                <strong>Sales Credit Target</strong>
+                <span>Official annual AOP commitment</span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_1.daniels.sales_credit_target|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_2.daniels.sales_credit_target|floatformat:0 }}
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         OPERATING PERFORMANCE
+         ========================================================== -->
+
+    <section class="summary-section">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-kicker">
+                    Operating Performance
+                </div>
+
+                <h2>
+                    Four sources of operating inefficiency
+                </h2>
+            </div>
+
+            <p>
+                Ms Nauta evaluates inventory and capacity through
+                carrying cost, lost sales, year-end write-off,
+                and unabsorbed manufacturing overhead.
+            </p>
+
+        </div>
+
+
+        <div class="inefficiency-grid">
+
+
+            <!-- Carrying Cost -->
+
+            <div class="inefficiency-card">
+
+                <small>
+                    Cost of Carrying Inventory
+                </small>
+
+                <div class="inefficiency-values">
+
+                    <div class="inefficiency-year">
+                        <span>Year 1</span>
+                        <strong>
+                            ${{ year_1.nauta.cost_of_carrying_inventory|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="inefficiency-year">
+                        <span>Year 2</span>
+                        <strong>
+                            ${{ year_2.nauta.cost_of_carrying_inventory|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Lost Sales -->
+
+            <div class="inefficiency-card">
+
+                <small>
+                    Cost of Lost Sales
+                </small>
+
+                <div class="inefficiency-values">
+
+                    <div class="inefficiency-year">
+                        <span>Year 1</span>
+                        <strong>
+                            ${{ year_1.nauta.cost_of_lost_sales|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="inefficiency-year">
+                        <span>Year 2</span>
+                        <strong>
+                            ${{ year_2.nauta.cost_of_lost_sales|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Write-off -->
+
+            <div class="inefficiency-card">
+
+                <small>
+                    Inventory Write-off
+                </small>
+
+                <div class="inefficiency-values">
+
+                    <div class="inefficiency-year">
+                        <span>Year 1</span>
+                        <strong>
+                            ${{ year_1.nauta.inventory_write_off|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="inefficiency-year">
+                        <span>Year 2</span>
+                        <strong>
+                            ${{ year_2.nauta.inventory_write_off|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Overhead -->
+
+            <div class="inefficiency-card">
+
+                <small>
+                    Manufacturing Overhead
+                </small>
+
+                <div class="inefficiency-values">
+
+                    <div class="inefficiency-year">
+                        <span>Year 1</span>
+                        <strong>
+                            ${{ year_1.nauta.manufacturing_overhead|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="inefficiency-year">
+                        <span>Year 2</span>
+                        <strong>
+                            ${{ year_2.nauta.manufacturing_overhead|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="year-comparison"
+            style="margin-top:14px;"
+        >
+
+            <div class="comparison-label">
+                <strong>Total Operating Inefficiency</strong>
+                <span>
+                    Carrying + lost sales + write-off + overhead
+                </span>
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_1.nauta.total_operating_inefficiency|floatformat:0 }}
+                </strong>
+
+                {% if year_1.nauta.within_limit %}
+                    <span class="status-badge good">
+                        Below 10% limit
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Above limit
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="comparison-value highlight">
+                <strong>
+                    ${{ year_2.nauta.total_operating_inefficiency|floatformat:0 }}
+                </strong>
+
+                {% if year_2.nauta.within_limit %}
+                    <span class="status-badge good">
+                        Below 10% limit
+                    </span>
+                {% else %}
+                    <span class="status-badge missed">
+                        Above limit
+                    </span>
+                {% endif %}
+            </div>
+
+
+            <div class="comparison-label">
+                <strong>Operating Limit</strong>
+                <span>
+                    10% of committed AOP budget
+                </span>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_1.nauta.operating_inefficiency_limit|floatformat:0 }}
+                </strong>
+            </div>
+
+            <div class="comparison-value">
+                <strong>
+                    ${{ year_2.nauta.operating_inefficiency_limit|floatformat:0 }}
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         BOARD REWARDS
+         ========================================================== -->
+
+    <section class="summary-section">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-kicker">
+                    Integrated Scorecard
+                </div>
+
+                <h2>
+                    Board Rewards across both years
+                </h2>
+            </div>
+
+            <p>
+                Each reward represents a different dimension of
+                Integrated Business Planning. Strong IBP performance
+                requires coordination across all three.
+            </p>
+
+        </div>
+
+
+        <div class="reward-matrix">
+
+
+            <div></div>
+
+            <div class="reward-matrix-head">
+                Year 1
+            </div>
+
+            <div class="reward-matrix-head">
+                Year 2
+            </div>
+
+
+            <!-- Clarke -->
+
+            <div class="reward-matrix-label">
+
+                <img
+                    src="{% static 'simulation/board/clarke.png' %}"
+                    alt="Mrs Clarke"
+                    class="board-mini-avatar"
+                >
+
+                <div>
+                    <strong>Mrs Clarke</strong>
+                    <span>Financial</span>
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_1.rewards.clarke %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_2.rewards.clarke %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+
+            <!-- Daniels -->
+
+            <div class="reward-matrix-label">
+
+                <img
+                    src="{% static 'simulation/board/daniels.png' %}"
+                    alt="Mr Daniels"
+                    class="board-mini-avatar"
+                >
+
+                <div>
+                    <strong>Mr Daniels</strong>
+                    <span>Commercial</span>
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_1.rewards.daniels %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_2.rewards.daniels %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+
+            <!-- Nauta -->
+
+            <div class="reward-matrix-label">
+
+                <img
+                    src="{% static 'simulation/board/nauta.png' %}"
+                    alt="Ms Nauta"
+                    class="board-mini-avatar"
+                >
+
+                <div>
+                    <strong>Ms Nauta</strong>
+                    <span>Operations</span>
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_1.rewards.nauta %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+            <div class="reward-cell">
+
+                <div
+                    class="
+                        reward-summary-r
+                        {% if year_2.rewards.nauta %}
+                            earned
+                        {% else %}
+                            missed
+                        {% endif %}
+                    "
+                >
+                    R
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         TWO-YEAR LEARNING STORY
+         ========================================================== -->
+
+    <section class="summary-section">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-kicker">
+                    Management Reflection
+                </div>
+
+                <h2>
+                    What the two years tested
+                </h2>
+            </div>
+
+        </div>
+
+
+        <div class="story-grid">
+
+
+            <!-- YEAR 1 -->
+
+            <article class="story-card year-one">
+
+                <small>
+                    Year 1 · Alignment
+                </small>
+
+                <h3>
+                    Build a disciplined operating baseline.
+                </h3>
+
+                <p>
+                    Year 1 focused on understanding the mechanics
+                    of the Annual Operating Plan and translating
+                    those commitments into monthly S&amp;OP decisions.
+                    Forecasting, base-stock replenishment, pricing,
+                    sales credit, budget consumption, and fixed-cost
+                    absorption had to remain aligned.
+                </p>
+
+                <div class="story-rewards">
+                    {{ year_1.rewards.earned }}
+                    of
+                    {{ year_1.rewards.available }}
+                    Year 1 Board Rewards earned
+                </div>
+
+            </article>
+
+
+            <!-- YEAR 2 -->
+
+            <article class="story-card year-two">
+
+                <small>
+                    Year 2 · Adaptation
+                </small>
+
+                <h3>
+                    Use pricing and supply decisions selectively.
+                </h3>
+
+                <p>
+                    Year 2 increased the growth ambition and widened
+                    demand uncertainty. New market information required
+                    you to distinguish between a signal that merely
+                    appeared and a signal that actually changed the
+                    economics of the inventory decision. Pricing became
+                    an S&amp;OP lever that had to be coordinated with
+                    replenishment and commercial commitments.
+                </p>
+
+                <div class="story-rewards">
+                    {{ year_2.rewards.earned }}
+                    of
+                    {{ year_2.rewards.available }}
+                    Year 2 Board Rewards earned
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==========================================================
+         FINAL IBP MESSAGE
+         ========================================================== -->
+
+    <section class="ibp-conclusion">
+
+        <div class="eyebrow">
+            Final Integrated Business Planning Reflection
+        </div>
+
+        <h2>
+            The objective was never simply to maximize profit.
+        </h2>
+
+        <p>
+            Integrated Business Planning connects the Annual Operating
+            Plan with recurring Sales &amp; Operations Planning.
+            Sales shapes demand and brings orders into the business.
+            Supply Chain converts those orders into fulfilled revenue.
+            Finance establishes the economic boundaries within which
+            both must operate. Strong management coordinates all three
+            rather than optimizing one function in isolation.
+        </p>
+
+
+        <div class="ibp-path">
+
+            <div class="ibp-path-item">
+                Annual Operating Plan
+            </div>
+
+            <div class="ibp-arrow">
+                →
+            </div>
+
+            <div class="ibp-path-item">
+                Demand &amp; Pricing
+            </div>
+
+            <div class="ibp-arrow">
+                →
+            </div>
+
+            <div class="ibp-path-item">
+                Inventory &amp; Supply
+            </div>
+
+            <div class="ibp-arrow">
+                →
+            </div>
+
+            <div class="ibp-path-item">
+                Monthly S&amp;OP
+            </div>
+
+            <div class="ibp-arrow">
+                →
+            </div>
+
+            <div class="ibp-path-item">
+                Integrated Performance
+            </div>
+
+        </div>
+
+
+        <div class="summary-actions">
+
+            {% if allow_full_restart %}
+                <form
+                    method="post"
+                    action="{% url 'restart_from_year_one' code=game.code %}"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-hero"
+                    >
+                        Start Over from Year 1
+                    </button>
+                </form>
+            {% endif %}
+
+            <a
+                href="{% url 'game_lobby' %}"
+                class="btn btn-ghost-hero"
+            >
+                Return to Game Lobby
+            </a>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,899 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Instructor Workspace | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .workspace-page {
+        min-height: calc(100vh - 70px);
+        background:
+            radial-gradient(
+                circle at 8% 4%,
+                rgba(114, 175, 163, 0.10),
+                transparent 28%
+            ),
+            linear-gradient(
+                180deg,
+                #f6f9f8 0%,
+                #edf3f1 100%
+            );
+        padding: 44px 28px 64px;
+    }
+
+    .workspace-shell {
+        width: min(100%, 1320px);
+        margin: 0 auto;
+    }
+
+    .workspace-hero {
+        position: relative;
+        overflow: hidden;
+
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+        gap: 36px;
+        align-items: center;
+
+        padding: 42px 44px;
+        border: 1px solid rgba(22, 58, 68, 0.09);
+        border-radius: 26px;
+
+        background:
+            linear-gradient(
+                120deg,
+                rgba(13, 37, 49, 0.98) 0%,
+                rgba(27, 67, 72, 0.95) 58%,
+                rgba(60, 107, 99, 0.92) 100%
+            );
+
+        color: #ffffff;
+
+        box-shadow:
+            0 20px 55px rgba(20, 49, 57, 0.13),
+            0 4px 16px rgba(20, 49, 57, 0.06);
+    }
+
+    .workspace-hero::after {
+        content: "";
+        position: absolute;
+        width: 360px;
+        height: 360px;
+        right: -120px;
+        top: -150px;
+        border-radius: 50%;
+        background: rgba(185, 222, 211, 0.10);
+        pointer-events: none;
+    }
+
+    .workspace-hero-copy,
+    .workspace-hero-side {
+        position: relative;
+        z-index: 2;
+    }
+
+    .workspace-logo {
+        width: 120px;
+        height: auto;
+        display: block;
+        margin-bottom: 24px;
+    }
+
+    .workspace-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+
+        margin-bottom: 13px;
+
+        color: rgba(255, 255, 255, 0.68);
+
+        font-size: 0.70rem;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .workspace-eyebrow-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #abd8c7;
+        box-shadow: 0 0 0 4px rgba(171, 216, 199, 0.09);
+    }
+
+    .workspace-title {
+        margin: 0;
+
+        font-size: clamp(2.25rem, 4.2vw, 4.45rem);
+        line-height: 0.98;
+        font-weight: 660;
+        letter-spacing: -0.045em;
+    }
+
+    .workspace-subtitle {
+        max-width: 720px;
+        margin: 20px 0 0;
+
+        color: rgba(255, 255, 255, 0.74);
+
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .workspace-profile-card {
+        padding: 22px 23px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 17px;
+
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(10px);
+    }
+
+    .workspace-profile-label {
+        margin-bottom: 6px;
+
+        color: rgba(255, 255, 255, 0.52);
+
+        font-size: 0.67rem;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .workspace-profile-name {
+        margin: 0;
+
+        font-size: 1.25rem;
+        font-weight: 720;
+        color: #ffffff;
+    }
+
+    .workspace-profile-meta {
+        margin-top: 8px;
+
+        color: rgba(255, 255, 255, 0.66);
+
+        font-size: 0.83rem;
+        line-height: 1.5;
+    }
+
+    .workspace-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+    }
+
+    .workspace-action-primary,
+    .workspace-action-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+
+        min-height: 46px;
+        padding: 11px 16px;
+
+        border-radius: 11px;
+
+        font-size: 0.84rem;
+        font-weight: 750;
+        text-decoration: none;
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease,
+            background 0.16s ease;
+    }
+
+    .workspace-action-primary {
+        background: #ffffff;
+        color: #183d46;
+
+        box-shadow: 0 8px 18px rgba(3, 17, 24, 0.15);
+    }
+
+    .workspace-action-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 11px 23px rgba(3, 17, 24, 0.18);
+    }
+
+    .workspace-action-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+    }
+
+    .workspace-action-secondary:hover {
+        background: rgba(255, 255, 255, 0.11);
+        transform: translateY(-1px);
+    }
+
+    .workspace-section {
+        margin-top: 34px;
+    }
+
+    .workspace-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 18px;
+
+        margin-bottom: 18px;
+    }
+
+    .workspace-section-kicker {
+        margin-bottom: 5px;
+
+        color: #758683;
+
+        font-size: 0.69rem;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .workspace-section-title {
+        margin: 0;
+
+        color: #173740;
+
+        font-size: 1.55rem;
+        line-height: 1.15;
+        font-weight: 720;
+        letter-spacing: -0.025em;
+    }
+
+    .workspace-section-copy {
+        margin: 7px 0 0;
+
+        color: #748385;
+
+        font-size: 0.86rem;
+        line-height: 1.55;
+    }
+
+    .workspace-create-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+
+        padding: 10px 14px;
+
+        border-radius: 10px;
+
+        background: #214f59;
+        color: #ffffff;
+
+        font-size: 0.80rem;
+        font-weight: 750;
+        text-decoration: none;
+
+        box-shadow: 0 8px 18px rgba(33, 79, 89, 0.14);
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease;
+    }
+
+    .workspace-create-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 11px 22px rgba(33, 79, 89, 0.18);
+    }
+
+    .game-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .game-card {
+        position: relative;
+        overflow: hidden;
+
+        padding: 24px;
+
+        border: 1px solid rgba(24, 58, 65, 0.09);
+        border-radius: 19px;
+
+        background: rgba(255, 255, 255, 0.94);
+
+        box-shadow:
+            0 12px 30px rgba(25, 55, 61, 0.07),
+            0 2px 8px rgba(25, 55, 61, 0.035);
+
+        transition:
+            transform 0.18s ease,
+            box-shadow 0.18s ease,
+            border-color 0.18s ease;
+    }
+
+    .game-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(61, 118, 109, 0.20);
+
+        box-shadow:
+            0 17px 36px rgba(25, 55, 61, 0.10),
+            0 3px 9px rgba(25, 55, 61, 0.04);
+    }
+
+    .game-card::before {
+        content: "";
+        position: absolute;
+        width: 105px;
+        height: 105px;
+        right: -38px;
+        top: -45px;
+        border-radius: 50%;
+        background: rgba(126, 181, 167, 0.08);
+        pointer-events: none;
+    }
+
+    .game-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .game-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        padding: 6px 9px;
+
+        border-radius: 999px;
+
+        background: #edf6f2;
+        color: #397067;
+
+        font-size: 0.67rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .game-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #5e9b8d;
+    }
+
+    .game-name {
+        margin: 14px 0 0;
+
+        color: #173740;
+
+        font-size: 1.25rem;
+        line-height: 1.25;
+        font-weight: 730;
+        letter-spacing: -0.02em;
+    }
+
+    .game-description {
+        margin: 9px 0 0;
+
+        color: #718184;
+
+        font-size: 0.83rem;
+        line-height: 1.55;
+    }
+
+    .game-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+
+        margin-top: 21px;
+    }
+
+    .game-stat {
+        padding: 12px 13px;
+
+        border-radius: 11px;
+        background: #f4f8f6;
+    }
+
+    .game-stat-label {
+        display: block;
+
+        color: #879593;
+
+        font-size: 0.64rem;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .game-stat-value {
+        display: block;
+        margin-top: 3px;
+
+        color: #24474e;
+
+        font-size: 1.1rem;
+        font-weight: 760;
+    }
+
+    .game-progress {
+        margin-top: 15px;
+    }
+
+    .game-progress-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+
+        margin-bottom: 7px;
+
+        color: #758482;
+
+        font-size: 0.72rem;
+        font-weight: 650;
+    }
+
+    .game-progress-track {
+        height: 6px;
+        overflow: hidden;
+
+        border-radius: 999px;
+
+        background: #e6eeeb;
+    }
+
+    .game-progress-fill {
+        height: 100%;
+        border-radius: inherit;
+
+        background:
+            linear-gradient(
+                90deg,
+                #315e66,
+                #72a998
+            );
+    }
+
+    .game-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+
+        margin-top: 22px;
+        padding-top: 18px;
+
+        border-top: 1px solid #e7edeb;
+    }
+
+    .game-card-primary,
+    .game-card-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        min-height: 39px;
+        padding: 9px 12px;
+
+        border-radius: 9px;
+
+        font-size: 0.76rem;
+        font-weight: 750;
+        text-decoration: none;
+    }
+
+    .game-card-primary {
+        background: #214f59;
+        color: #ffffff;
+    }
+
+    .game-card-secondary {
+        border: 1px solid #d7e2de;
+        background: #ffffff;
+        color: #456166;
+    }
+
+    .game-card-primary:hover,
+    .game-card-secondary:hover {
+        filter: brightness(0.98);
+    }
+
+    .empty-workspace {
+        padding: 46px 28px;
+
+        border: 1px dashed #cfdcD8;
+        border-radius: 20px;
+
+        background: rgba(255, 255, 255, 0.72);
+
+        text-align: center;
+    }
+
+    .empty-symbol {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 58px;
+        height: 58px;
+
+        margin: 0 auto 18px;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #214f59,
+                #6d9d90
+            );
+
+        color: white;
+
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    .empty-title {
+        margin: 0;
+
+        color: #1f4148;
+
+        font-size: 1.2rem;
+        font-weight: 730;
+    }
+
+    .empty-copy {
+        max-width: 520px;
+        margin: 9px auto 20px;
+
+        color: #778685;
+
+        font-size: 0.84rem;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+        .workspace-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .workspace-hero-side {
+            max-width: 520px;
+        }
+
+        .game-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .workspace-page {
+            padding: 24px 16px 44px;
+        }
+
+        .workspace-hero {
+            padding: 30px 22px;
+            border-radius: 20px;
+        }
+
+        .workspace-logo {
+            width: 100px;
+        }
+
+        .workspace-section-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .game-card {
+            padding: 20px;
+        }
+
+        .game-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .workspace-actions {
+            flex-direction: column;
+        }
+
+        .workspace-action-primary,
+        .workspace-action-secondary {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="workspace-page">
+
+    <div class="workspace-shell">
+
+        <!-- ======================================================
+             INSTRUCTOR HERO
+             ====================================================== -->
+
+        <section class="workspace-hero">
+
+            <div class="workspace-hero-copy">
+
+                <img
+                    src="{% static 'simulation/logo/x_logo.png' %}"
+                    alt="X-Summit Bikes"
+                    class="workspace-logo"
+                >
+
+                <div class="workspace-eyebrow">
+                    <span class="workspace-eyebrow-dot"></span>
+                    Instructor Workspace
+                </div>
+
+                <h1 class="workspace-title">
+                    Design the challenge.
+                    Guide the learning.
+                </h1>
+
+                <p class="workspace-subtitle">
+                    Create and manage X-Summit Bikes simulations, invite
+                    participants, monitor progress, and review individual and
+                    cohort performance from one workspace.
+                </p>
+
+                <div class="workspace-actions">
+
+                    <a
+                        href="{% url 'create_game' %}"
+                        class="workspace-action-primary"
+                    >
+                        + Create New Simulation
+                    </a>
+
+                    <a
+                        href="{% url 'game_lobby' %}"
+                        class="workspace-action-secondary"
+                    >
+                        View Main Lobby
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <aside class="workspace-hero-side">
+
+                <div class="workspace-profile-card">
+
+                    <div class="workspace-profile-label">
+                        Instructor Profile
+                    </div>
+
+                    <h2 class="workspace-profile-name">
+                        {{ request.user.first_name }}
+                        {{ request.user.last_name }}
+                    </h2>
+
+                    <div class="workspace-profile-meta">
+
+                        {% if profile.get_title_display %}
+                            {{ profile.get_title_display }}
+                        {% endif %}
+
+                        {% if profile.institution %}
+                            {% if profile.get_title_display %}
+                                <br>
+                            {% endif %}
+                            {{ profile.institution }}
+                        {% endif %}
+
+                        {% if request.user.email %}
+                            <br>
+                            {{ request.user.email }}
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+        <!-- ======================================================
+             SIMULATIONS
+             ====================================================== -->
+
+        <section class="workspace-section">
+
+            <div class="workspace-section-header">
+
+                <div>
+
+                    <div class="workspace-section-kicker">
+                        Your Simulations
+                    </div>
+
+                    <h2 class="workspace-section-title">
+                        Manage active learning experiences
+                    </h2>
+
+                    <p class="workspace-section-copy">
+                        Open a simulation to review participants, monitor
+                        progress, inspect results, or adjust retry permissions.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{% url 'create_game' %}"
+                    class="workspace-create-link"
+                >
+                    + New Simulation
+                </a>
+
+            </div>
+
+
+            {% if game_rows %}
+
+                <div class="game-grid">
+
+                    {% for row in game_rows %}
+
+                        <article class="game-card">
+
+                            <div class="game-card-top">
+
+                                <div>
+
+                                    <div class="game-status">
+                                        <span class="game-status-dot"></span>
+                                        {{ row.game.get_status_display }}
+                                    </div>
+
+                                    <h3 class="game-name">
+                                        {{ row.game.name }}
+                                    </h3>
+
+                                    {% if row.game.description %}
+                                        <p class="game-description">
+                                            {{ row.game.description|truncatechars:150 }}
+                                        </p>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="game-stats">
+
+                                <div class="game-stat">
+
+                                    <span class="game-stat-label">
+                                        Registered Players
+                                    </span>
+
+                                    <span class="game-stat-value">
+                                        {{ row.player_count }}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="game-stat">
+
+                                    <span class="game-stat-label">
+                                        Completed
+                                    </span>
+
+                                    <span class="game-stat-value">
+                                        {{ row.completed_count }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            {% if row.player_count %}
+
+                                <div class="game-progress">
+
+                                    <div class="game-progress-row">
+
+                                        <span>
+                                            Completion
+                                        </span>
+
+                                        <span>
+                                            {{ row.completed_count }}
+                                            of
+                                            {{ row.player_count }}
+                                        </span>
+
+                                    </div>
+
+                                    <div class="game-progress-track">
+
+                                        <div
+                                            class="game-progress-fill"
+                                            style="width: {% widthratio row.completed_count row.player_count 100 %}%;"
+                                        ></div>
+
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="game-card-actions">
+
+                                <a
+                                    href="{% url 'admin_game_dashboard' code=row.game.code %}"
+                                    class="game-card-primary"
+                                >
+                                    Open Dashboard
+                                </a>
+
+                                <a
+                                    href="{% url 'game_design' code=row.game.code %}"
+                                    class="game-card-secondary"
+                                >
+                                    Design Settings
+                                </a>
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-workspace">
+
+                    <div class="empty-symbol">
+                        X
+                    </div>
+
+                    <h3 class="empty-title">
+                        Create your first simulation.
+                    </h3>
+
+                    <p class="empty-copy">
+                        Set up an X-Summit Bikes learning experience, choose
+                        the player retry permissions, and generate a private
+                        invitation link for your class or executive cohort.
+                    </p>
+
+                    <a
+                        href="{% url 'create_game' %}"
+                        class="workspace-create-link"
+                    >
+                        Create New Simulation
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

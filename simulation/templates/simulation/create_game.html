@@ -1,0 +1,874 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Create Simulation | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .create-page {
+        min-height: calc(100vh - 70px);
+        padding: 42px 28px 64px;
+
+        background:
+            radial-gradient(
+                circle at 8% 5%,
+                rgba(109, 165, 151, 0.10),
+                transparent 28%
+            ),
+            linear-gradient(
+                180deg,
+                #f6f9f8 0%,
+                #edf3f1 100%
+            );
+    }
+
+    .create-shell {
+        width: min(100%, 1320px);
+        margin: 0 auto;
+    }
+
+    /* ==============================================================
+       PAGE HEADER
+       ============================================================== */
+
+    .create-header {
+        position: relative;
+        overflow: hidden;
+
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) auto;
+        gap: 30px;
+        align-items: center;
+
+        margin-bottom: 24px;
+        padding: 36px 40px;
+
+        border: 1px solid rgba(21, 56, 65, 0.09);
+        border-radius: 24px;
+
+        background:
+            linear-gradient(
+                120deg,
+                rgba(14, 38, 50, 0.98) 0%,
+                rgba(30, 70, 74, 0.96) 62%,
+                rgba(67, 111, 102, 0.93) 100%
+            );
+
+        color: #ffffff;
+
+        box-shadow:
+            0 18px 48px rgba(20, 49, 57, 0.12),
+            0 4px 14px rgba(20, 49, 57, 0.05);
+    }
+
+    .create-header::after {
+        content: "";
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        right: -110px;
+        top: -170px;
+
+        border-radius: 50%;
+        background: rgba(183, 221, 210, 0.10);
+
+        pointer-events: none;
+    }
+
+    .create-header-copy,
+    .create-header-actions {
+        position: relative;
+        z-index: 2;
+    }
+
+    .create-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        margin-bottom: 19px;
+    }
+
+    .create-header-logo {
+        width: 88px;
+        height: auto;
+        display: block;
+    }
+
+    .create-header-kicker {
+        color: rgba(255, 255, 255, 0.64);
+
+        font-size: 0.69rem;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .create-title {
+        margin: 0;
+
+        font-size: clamp(2.1rem, 4vw, 3.9rem);
+        line-height: 1;
+        font-weight: 670;
+        letter-spacing: -0.042em;
+    }
+
+    .create-copy {
+        max-width: 740px;
+        margin: 16px 0 0;
+
+        color: rgba(255, 255, 255, 0.73);
+
+        font-size: 0.97rem;
+        line-height: 1.67;
+    }
+
+    .create-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 44px;
+        padding: 10px 15px;
+
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+
+        background: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+
+        font-size: 0.80rem;
+        font-weight: 740;
+        text-decoration: none;
+
+        transition:
+            transform 0.16s ease,
+            background 0.16s ease;
+    }
+
+    .create-back:hover {
+        background: rgba(255, 255, 255, 0.11);
+        transform: translateY(-1px);
+    }
+
+    /* ==============================================================
+       MAIN GRID
+       ============================================================== */
+
+    .create-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.22fr) minmax(320px, 0.78fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .create-panel {
+        overflow: hidden;
+
+        border: 1px solid rgba(24, 58, 65, 0.09);
+        border-radius: 20px;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        box-shadow:
+            0 12px 32px rgba(25, 55, 61, 0.07),
+            0 2px 8px rgba(25, 55, 61, 0.035);
+    }
+
+    .create-panel-header {
+        padding: 24px 26px 20px;
+
+        border-bottom: 1px solid #e7eeeb;
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #f8fbf9 100%
+            );
+    }
+
+    .create-panel-kicker {
+        margin-bottom: 5px;
+
+        color: #718480;
+
+        font-size: 0.67rem;
+        font-weight: 760;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .create-panel-title {
+        margin: 0;
+
+        color: #173740;
+
+        font-size: 1.35rem;
+        line-height: 1.2;
+        font-weight: 730;
+        letter-spacing: -0.025em;
+    }
+
+    .create-panel-copy {
+        margin: 8px 0 0;
+
+        color: #748385;
+
+        font-size: 0.84rem;
+        line-height: 1.56;
+    }
+
+    .create-panel-body {
+        padding: 26px;
+    }
+
+    /* ==============================================================
+       FORM
+       ============================================================== */
+
+    .create-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .create-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .create-field.full {
+        grid-column: 1 / -1;
+    }
+
+    .create-field label {
+        color: #29464d;
+
+        font-size: 0.79rem;
+        font-weight: 700;
+    }
+
+    .create-field input,
+    .create-field textarea,
+    .create-field select {
+        width: 100%;
+
+        padding: 11px 13px;
+
+        border: 1px solid #ccd9d6;
+        border-radius: 11px;
+
+        outline: none;
+        background: #fbfdfc;
+        color: #173239;
+
+        font: inherit;
+        font-size: 0.93rem;
+
+        transition:
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
+            background 0.18s ease;
+    }
+
+    .create-field input,
+    .create-field select {
+        min-height: 48px;
+    }
+
+    .create-field textarea {
+        min-height: 104px;
+        resize: vertical;
+    }
+
+    .create-field input:focus,
+    .create-field textarea:focus,
+    .create-field select:focus {
+        border-color: #6da79d;
+        background: #ffffff;
+
+        box-shadow:
+            0 0 0 4px rgba(109, 167, 157, 0.13);
+    }
+
+    .create-field small {
+        color: #879391;
+
+        font-size: 0.72rem;
+        line-height: 1.45;
+    }
+
+    .create-field ul.errorlist {
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+
+        color: #9a3d3d;
+
+        font-size: 0.76rem;
+        line-height: 1.45;
+    }
+
+    .create-alert {
+        margin-bottom: 20px;
+        padding: 13px 15px;
+
+        border: 1px solid #efd1d1;
+        border-radius: 10px;
+
+        background: #fff2f2;
+        color: #7d3535;
+
+        font-size: 0.83rem;
+        line-height: 1.5;
+    }
+
+    .create-form-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+
+        margin-top: 26px;
+        padding-top: 21px;
+
+        border-top: 1px solid #e7edeb;
+    }
+
+    .create-submit,
+    .create-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 45px;
+        padding: 10px 16px;
+
+        border-radius: 10px;
+
+        font-size: 0.80rem;
+        font-weight: 750;
+        text-decoration: none;
+    }
+
+    .create-submit {
+        border: 0;
+
+        background:
+            linear-gradient(
+                135deg,
+                #1e4b56,
+                #39776f
+            );
+
+        color: #ffffff;
+        cursor: pointer;
+
+        box-shadow:
+            0 9px 20px rgba(30, 75, 86, 0.18);
+
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease;
+    }
+
+    .create-submit:hover {
+        transform: translateY(-1px);
+        box-shadow:
+            0 12px 25px rgba(30, 75, 86, 0.22);
+    }
+
+    .create-cancel {
+        border: 1px solid #d8e2df;
+        background: #ffffff;
+        color: #50686c;
+    }
+
+    /* ==============================================================
+       WORKFLOW PANEL
+       ============================================================== */
+
+    .launch-flow {
+        display: grid;
+        gap: 12px;
+    }
+
+    .launch-step {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+
+        padding: 14px;
+
+        border: 1px solid #e0e9e6;
+        border-radius: 12px;
+
+        background: #f7faf8;
+    }
+
+    .launch-step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 38px;
+        height: 38px;
+
+        border-radius: 10px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #214e58,
+                #649486
+            );
+
+        color: #ffffff;
+
+        font-size: 0.75rem;
+        font-weight: 800;
+    }
+
+    .launch-step strong {
+        display: block;
+
+        margin-bottom: 4px;
+
+        color: #29464d;
+
+        font-size: 0.83rem;
+        font-weight: 730;
+    }
+
+    .launch-step p {
+        margin: 0;
+
+        color: #748382;
+
+        font-size: 0.76rem;
+        line-height: 1.5;
+    }
+
+    .launch-note {
+        margin-top: 17px;
+        padding: 14px 15px;
+
+        border: 1px solid #dbe8e3;
+        border-radius: 12px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #f1f7f4,
+                #f7faf8
+            );
+    }
+
+    .launch-note strong {
+        display: block;
+
+        margin-bottom: 5px;
+
+        color: #355f59;
+
+        font-size: 0.80rem;
+    }
+
+    .launch-note p {
+        margin: 0;
+
+        color: #6e807d;
+
+        font-size: 0.75rem;
+        line-height: 1.52;
+    }
+
+    .launch-security {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+
+        margin-top: 16px;
+        padding-top: 16px;
+
+        border-top: 1px solid #e6ecea;
+
+        color: #788684;
+
+        font-size: 0.73rem;
+        line-height: 1.5;
+    }
+
+    .launch-security-mark {
+        color: #4d8175;
+        font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+        .create-header {
+            grid-template-columns: 1fr;
+        }
+
+        .create-header-actions {
+            justify-self: start;
+        }
+
+        .create-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .create-page {
+            padding: 24px 16px 44px;
+        }
+
+        .create-header {
+            padding: 28px 22px;
+            border-radius: 19px;
+        }
+
+        .create-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .create-field.full {
+            grid-column: auto;
+        }
+
+        .create-panel-header,
+        .create-panel-body {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .create-form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .create-submit,
+        .create-cancel {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="create-page">
+
+    <div class="create-shell">
+
+        <!-- ======================================================
+             HEADER
+             ====================================================== -->
+
+        <header class="create-header">
+
+            <div class="create-header-copy">
+
+                <div class="create-header-brand">
+
+                    <img
+                        src="{% static 'simulation/logo/x_logo.png' %}"
+                        alt="X-Summit Bikes"
+                        class="create-header-logo"
+                    >
+
+                    <div class="create-header-kicker">
+                        Instructor Workspace
+                    </div>
+
+                </div>
+
+                <h1 class="create-title">
+                    Launch a new simulation
+                </h1>
+
+                <p class="create-copy">
+                    Create a private X-Summit Bikes learning environment for
+                    your class or executive cohort. After creation, you will
+                    configure player retry permissions and receive a secure
+                    invitation link to share with participants.
+                </p>
+
+            </div>
+
+
+            <div class="create-header-actions">
+
+                <a
+                    href="{% url 'instructor_workspace' %}"
+                    class="create-back"
+                >
+                    Return to Instructor Workspace
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- ======================================================
+             MAIN CONTENT
+             ====================================================== -->
+
+        <div class="create-grid">
+
+            <!-- ==================================================
+                 GAME SETUP
+                 ================================================== -->
+
+            <section class="create-panel">
+
+                <div class="create-panel-header">
+
+                    <div class="create-panel-kicker">
+                        Simulation Setup
+                    </div>
+
+                    <h2 class="create-panel-title">
+                        Create your learning environment
+                    </h2>
+
+                    <p class="create-panel-copy">
+                        Give the simulation a recognizable name for your
+                        class or cohort. You can also add an optional
+                        description and registration deadline.
+                    </p>
+
+                </div>
+
+
+                <div class="create-panel-body">
+
+                    <form method="post" novalidate>
+
+                        {% csrf_token %}
+
+
+                        {% if form.non_field_errors %}
+
+                            <div
+                                class="create-alert"
+                                role="alert"
+                            >
+                                {{ form.non_field_errors }}
+                            </div>
+
+                        {% endif %}
+
+
+                        <div class="create-form-grid">
+
+                            {% for field in form %}
+
+                                <div
+                                    class="
+                                        create-field
+
+                                        {% if field.name == 'name' or field.name == 'description' %}
+                                            full
+                                        {% endif %}
+                                    "
+                                >
+
+                                    {{ field.label_tag }}
+
+                                    {{ field }}
+
+                                    {% if field.help_text %}
+                                        <small>
+                                            {{ field.help_text }}
+                                        </small>
+                                    {% endif %}
+
+                                    {{ field.errors }}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="create-form-actions">
+
+                            <button
+                                type="submit"
+                                class="create-submit"
+                            >
+                                Create Simulation
+                            </button>
+
+                            <a
+                                href="{% url 'instructor_workspace' %}"
+                                class="create-cancel"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==================================================
+                 LAUNCH WORKFLOW
+                 ================================================== -->
+
+            <aside class="create-panel">
+
+                <div class="create-panel-header">
+
+                    <div class="create-panel-kicker">
+                        Launch Workflow
+                    </div>
+
+                    <h2 class="create-panel-title">
+                        What happens next?
+                    </h2>
+
+                    <p class="create-panel-copy">
+                        X-Summit Bikes guides you through a short launch
+                        process before participants begin.
+                    </p>
+
+                </div>
+
+
+                <div class="create-panel-body">
+
+                    <div class="launch-flow">
+
+                        <div class="launch-step">
+
+                            <div class="launch-step-number">
+                                01
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Create
+                                </strong>
+
+                                <p>
+                                    Name the simulation and, if needed,
+                                    set a registration deadline.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="launch-step">
+
+                            <div class="launch-step-number">
+                                02
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Design
+                                </strong>
+
+                                <p>
+                                    Decide whether players may redo Year 1,
+                                    redo Year 2, or restart from Year 1.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="launch-step">
+
+                            <div class="launch-step-number">
+                                03
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Invite
+                                </strong>
+
+                                <p>
+                                    Copy the private invitation link and
+                                    share it with your participants.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="launch-step">
+
+                            <div class="launch-step-number">
+                                04
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Monitor
+                                </strong>
+
+                                <p>
+                                    Track participant progress and review
+                                    individual and cohort performance.
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="launch-note">
+
+                        <strong>
+                            Core progression is always protected
+                        </strong>
+
+                        <p>
+                            Continue to Year 2 and Summarize Results are
+                            part of the simulation structure and are always
+                            available. Only retry permissions are configurable.
+                        </p>
+
+                    </div>
+
+
+                    <div class="launch-security">
+
+                        <span class="launch-security-mark">
+                            ✓
+                        </span>
+
+                        <span>
+                            Players join only through the private invitation
+                            link associated with this simulation.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

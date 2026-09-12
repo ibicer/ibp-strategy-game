@@ -1,0 +1,576 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+Instructor Signup | X-Summit Bikes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .signup-shell {
+        min-height: calc(100vh - 70px);
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(12, 31, 45, 0.98),
+                rgba(25, 55, 64, 0.96)
+            );
+    }
+
+    .signup-brand-side {
+        position: relative;
+        overflow: hidden;
+        padding: 64px 64px 56px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: white;
+        background:
+            linear-gradient(
+                180deg,
+                rgba(10, 28, 40, 0.84),
+                rgba(10, 28, 40, 0.94)
+            ),
+            url("{% static 'simulation/login/alpine_trail.png' %}")
+            center center / cover no-repeat;
+    }
+
+    .signup-brand-side::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(
+                120deg,
+                rgba(18, 52, 60, 0.22),
+                rgba(255, 255, 255, 0.04)
+            );
+        pointer-events: none;
+    }
+
+    .signup-brand-content,
+    .signup-brand-footer {
+        position: relative;
+        z-index: 2;
+    }
+
+    .signup-logo {
+        width: 155px;
+        height: auto;
+        display: block;
+        margin-bottom: 38px;
+    }
+
+    .signup-eyebrow {
+        display: inline-block;
+        margin-bottom: 18px;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.68);
+    }
+
+    .signup-title {
+        margin: 0;
+        max-width: 620px;
+        font-size: clamp(2.6rem, 4.4vw, 4.8rem);
+        line-height: 0.98;
+        font-weight: 650;
+        letter-spacing: -0.045em;
+    }
+
+    .signup-subtitle {
+        max-width: 620px;
+        margin-top: 26px;
+        font-size: 1.08rem;
+        line-height: 1.72;
+        color: rgba(255, 255, 255, 0.76);
+    }
+
+    .signup-benefits {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 38px;
+        max-width: 720px;
+    }
+
+    .signup-benefit {
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .signup-benefit strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.95rem;
+        font-weight: 650;
+    }
+
+    .signup-benefit span {
+        display: block;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.62);
+    }
+
+    .signup-brand-footer {
+        margin-top: 54px;
+    }
+
+    .school-logo {
+        width: 245px;
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .signup-form-side {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 56px 42px;
+        background:
+            linear-gradient(
+                180deg,
+                #f7f9f8 0%,
+                #eef3f1 100%
+            );
+    }
+
+    .signup-form-wrap {
+        width: min(100%, 640px);
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(17, 44, 54, 0.08);
+        border-radius: 24px;
+        padding: 38px 38px 34px;
+        box-shadow:
+            0 20px 55px rgba(14, 36, 45, 0.10),
+            0 4px 16px rgba(14, 36, 45, 0.05);
+        backdrop-filter: blur(12px);
+    }
+
+    .signup-form-header {
+        margin-bottom: 30px;
+    }
+
+    .signup-form-kicker {
+        margin-bottom: 8px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 700;
+        color: #6a7f7d;
+    }
+
+    .signup-form-heading {
+        margin: 0;
+        font-size: 2rem;
+        line-height: 1.1;
+        letter-spacing: -0.035em;
+        color: #16323b;
+    }
+
+    .signup-form-intro {
+        margin: 12px 0 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #6a7a7d;
+    }
+
+    .signup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .signup-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .signup-field.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .signup-field label {
+        font-size: 0.80rem;
+        font-weight: 700;
+        color: #29434a;
+    }
+
+    .signup-field input,
+    .signup-field select {
+        width: 100%;
+        min-height: 48px;
+        padding: 11px 13px;
+        border: 1px solid #ccd9d6;
+        border-radius: 11px;
+        background: #fbfdfc;
+        font-size: 0.95rem;
+        color: #173039;
+        outline: none;
+        transition:
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
+            background 0.18s ease;
+    }
+
+    .signup-field input:focus,
+    .signup-field select:focus {
+        border-color: #6ca39c;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(108, 163, 156, 0.13);
+    }
+
+    .signup-field ul.errorlist {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        color: #9b3d3d;
+    }
+
+    .signup-alert {
+        margin-bottom: 22px;
+        padding: 13px 15px;
+        border-radius: 10px;
+        background: #fff1f1;
+        border: 1px solid #efd0d0;
+        color: #7e3333;
+        font-size: 0.86rem;
+        line-height: 1.5;
+    }
+
+    .signup-submit {
+        width: 100%;
+        min-height: 52px;
+        margin-top: 26px;
+        border: 0;
+        border-radius: 12px;
+        background:
+            linear-gradient(
+                135deg,
+                #183c49,
+                #2e6f72
+            );
+        color: white;
+        font-size: 0.98rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(28, 76, 84, 0.20);
+        transition:
+            transform 0.16s ease,
+            box-shadow 0.16s ease,
+            opacity 0.16s ease;
+    }
+
+    .signup-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(28, 76, 84, 0.24);
+    }
+
+    .signup-submit:active {
+        transform: translateY(0);
+    }
+
+    .signup-footer {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e6ecea;
+        text-align: center;
+        font-size: 0.84rem;
+        color: #718185;
+    }
+
+    .signup-footer a {
+        color: #2d666b;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .signup-footer a:hover {
+        text-decoration: underline;
+    }
+
+    .signup-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #f1f6f4;
+        color: #5b6e70;
+        font-size: 0.78rem;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 1020px) {
+        .signup-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .signup-brand-side {
+            min-height: auto;
+            padding: 42px 30px 38px;
+        }
+
+        .signup-title {
+            max-width: 760px;
+        }
+
+        .signup-benefits {
+            max-width: 760px;
+        }
+
+        .signup-brand-footer {
+            margin-top: 34px;
+        }
+
+        .signup-form-side {
+            padding: 40px 20px 50px;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .signup-brand-side {
+            padding: 34px 22px;
+        }
+
+        .signup-benefits {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .signup-form-wrap {
+            padding: 28px 20px 26px;
+            border-radius: 18px;
+        }
+
+        .signup-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .signup-field.full-width {
+            grid-column: auto;
+        }
+
+        .signup-logo {
+            width: 126px;
+        }
+
+        .school-logo {
+            width: 215px;
+        }
+    }
+</style>
+
+<div class="signup-shell">
+
+    <section class="signup-brand-side">
+
+        <div class="signup-brand-content">
+
+            <img
+                src="{% static 'simulation/logo/x_logo.png' %}"
+                alt="X-Summit Bikes"
+                class="signup-logo"
+            >
+
+            <span class="signup-eyebrow">
+                Instructor Access
+            </span>
+
+            <h1 class="signup-title">
+                Build the challenge.
+                Lead the boardroom.
+            </h1>
+
+            <p class="signup-subtitle">
+                Create and manage an Integrated Business Planning simulation
+                where participants make connected decisions across pricing,
+                demand, inventory, operations, and finance. Configure the
+                learning experience, invite your cohort, and review both
+                individual and class-level performance from one instructor
+                workspace.
+            </p>
+
+            <div class="signup-benefits">
+
+                <div class="signup-benefit">
+                    <strong>Design</strong>
+                    <span>
+                        Configure simulation permissions and participant
+                        decision rights.
+                    </span>
+                </div>
+
+                <div class="signup-benefit">
+                    <strong>Invite</strong>
+                    <span>
+                        Share a private game link with your class or
+                        executive cohort.
+                    </span>
+                </div>
+
+                <div class="signup-benefit">
+                    <strong>Analyze</strong>
+                    <span>
+                        Review individual outcomes and cohort-level
+                        performance statistics.
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="signup-brand-footer">
+            <img
+                src="{% static 'simulation/logo/schulich_logo.png' %}"
+                alt="Schulich School of Business, York University"
+                class="school-logo"
+            >
+        </div>
+
+    </section>
+
+
+    <section class="signup-form-side">
+
+        <div class="signup-form-wrap">
+
+            <div class="signup-form-header">
+
+                <div class="signup-form-kicker">
+                    Create Instructor Account
+                </div>
+
+                <h2 class="signup-form-heading">
+                    Start your simulation workspace.
+                </h2>
+
+                <p class="signup-form-intro">
+                    Enter your professional details below. Once registered,
+                    you can create simulations and invite participants
+                    immediately.
+                </p>
+
+            </div>
+
+
+            {% if form.non_field_errors %}
+                <div class="signup-alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+
+            <form method="post" novalidate>
+
+                {% csrf_token %}
+
+                <div class="signup-grid">
+
+                    <div class="signup-field">
+                        <label for="{{ form.first_name.id_for_label }}">
+                            First Name
+                        </label>
+                        {{ form.first_name }}
+                        {{ form.first_name.errors }}
+                    </div>
+
+                    <div class="signup-field">
+                        <label for="{{ form.last_name.id_for_label }}">
+                            Surname
+                        </label>
+                        {{ form.last_name }}
+                        {{ form.last_name.errors }}
+                    </div>
+
+                    <div class="signup-field full-width">
+                        <label for="{{ form.institution.id_for_label }}">
+                            Institution
+                        </label>
+                        {{ form.institution }}
+                        {{ form.institution.errors }}
+                    </div>
+
+                    <div class="signup-field">
+                        <label for="{{ form.title.id_for_label }}">
+                            Title
+                        </label>
+                        {{ form.title }}
+                        {{ form.title.errors }}
+                    </div>
+
+                    <div class="signup-field">
+                        <label for="{{ form.email.id_for_label }}">
+                            Email Address
+                        </label>
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+
+                    <div class="signup-field full-width">
+                        <label for="{{ form.username.id_for_label }}">
+                            Username
+                        </label>
+                        {{ form.username }}
+                        {{ form.username.errors }}
+                    </div>
+
+                    <div class="signup-field">
+                        <label for="{{ form.password1.id_for_label }}">
+                            Password
+                        </label>
+                        {{ form.password1 }}
+                        {{ form.password1.errors }}
+                    </div>
+
+                    <div class="signup-field">
+                        <label for="{{ form.password2.id_for_label }}">
+                            Confirm Password
+                        </label>
+                        {{ form.password2 }}
+                        {{ form.password2.errors }}
+                    </div>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="signup-submit"
+                >
+                    Create Instructor Account
+                </button>
+
+            </form>
+
+
+            <div class="signup-note">
+                Instructor accounts are intended for educators, facilitators,
+                and professional learning leaders who create and manage
+                X-Summit Bikes simulation sessions.
+            </div>
+
+
+            <div class="signup-footer">
+                Already have an account?
+                <a href="{% url 'login' %}">
+                    Sign in
+                </a>
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}

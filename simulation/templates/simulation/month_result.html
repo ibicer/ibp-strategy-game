@@ -1,0 +1,764 @@
+{% extends "simulation/base.html" %}
+
+{% block title %}
+    {{ decision.get_month_display }} S&amp;OP Results | {{ game.name }}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .result-products {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .result-product {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 19px;
+        background: var(--white);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .result-product-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 21px;
+        color: var(--white);
+        background:
+            linear-gradient(
+                135deg,
+                var(--navy-900),
+                var(--navy-700)
+            );
+    }
+
+    .result-product-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .result-revenue {
+        text-align: right;
+    }
+
+    .result-revenue span {
+        display: block;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .result-revenue strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 1.35rem;
+    }
+
+    .result-product-body {
+        padding: 21px;
+    }
+
+    .inventory-flow {
+        display: grid;
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .inventory-flow-item {
+        padding: 11px 7px;
+        text-align: center;
+        border-radius: 11px;
+        background: var(--ice-100);
+    }
+
+    .inventory-flow-item.highlight {
+        color: var(--white);
+        background: var(--teal-600);
+    }
+
+    .inventory-flow-item span {
+        display: block;
+        font-size: 0.56rem;
+        font-weight: 800;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+    }
+
+    .inventory-flow-item strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 1.05rem;
+    }
+
+    .result-detail-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .result-detail {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.86);
+    }
+
+    .result-detail.emphasis {
+        background:
+            linear-gradient(
+                145deg,
+                rgba(223, 247, 244, 0.72),
+                rgba(255, 255, 255, 0.96)
+            );
+    }
+
+    .result-detail.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .result-detail span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.59rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .result-detail strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--navy-900);
+    }
+
+    .forecast-comparison {
+        display: grid;
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .forecast-comparison-item {
+        padding: 13px;
+        text-align: center;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--ice-50);
+    }
+
+    .forecast-comparison-item.forecast {
+        background: rgba(255, 244, 216, 0.62);
+    }
+
+    .forecast-comparison-item.actual {
+        background: rgba(223, 247, 244, 0.66);
+    }
+
+    .forecast-comparison-item.adjusted {
+        background: rgba(237, 245, 248, 0.86);
+    }
+
+    .forecast-comparison-item span {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.58rem;
+        font-weight: 800;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+    }
+
+    .forecast-comparison-item strong {
+        display: block;
+        margin-top: 6px;
+        color: var(--navy-900);
+        font-size: 1.15rem;
+    }
+
+    .forecast-product + .forecast-product {
+        margin-top: 20px;
+    }
+
+    .annual-outlook-table {
+        min-width: 1040px;
+    }
+
+    .annual-outlook-table th,
+    .annual-outlook-table td {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .annual-outlook-table .product-column {
+        min-width: 170px;
+        text-align: left;
+    }
+
+    .annual-outlook-group {
+        font-size: 0.66rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .annual-outlook-group.realized {
+        background: rgba(223, 247, 244, 0.86);
+    }
+
+    .annual-outlook-group.forecast {
+        background: rgba(255, 244, 216, 0.82);
+    }
+
+    .annual-outlook-month.realized,
+    .annual-outlook-value.realized {
+        background: rgba(223, 247, 244, 0.42);
+    }
+
+    .annual-outlook-month.forecast,
+    .annual-outlook-value.forecast {
+        background: rgba(255, 244, 216, 0.38);
+    }
+
+    .annual-outlook-value strong {
+        color: var(--navy-900);
+    }
+
+    @media (max-width: 980px) {
+        .result-products {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .inventory-flow,
+        .result-detail-grid,
+        .forecast-comparison {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .result-detail.full-width {
+            grid-column: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .inventory-flow,
+        .result-detail-grid,
+        .forecast-comparison {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <div class="eyebrow">
+            Monthly S&amp;OP Result · {{ decision.get_month_display }}
+        </div>
+
+        <h1>
+            Review the month. Learn from the result.
+        </h1>
+
+        <p class="hero-copy">
+            Compare the forecast with realized demand, review the
+            commercial and inventory consequences of your decisions,
+            and carry those lessons into the next monthly S&amp;OP cycle.
+        </p>
+
+        <div class="hero-actions">
+            <span class="badge badge-teal">
+                Year {{ scenario_year.year_number }}
+            </span>
+
+            <span class="badge badge-dark">
+                Forecast Vintage:
+                {{ forecast_base_month_name }}
+            </span>
+
+            {% if next_month %}
+                <span class="badge badge-gold">
+                    Next S&amp;OP: {{ next_month_name }}
+                </span>
+            {% else %}
+                <span class="badge badge-green">
+                    Fiscal Year Complete
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% if score %}
+    <div class="section-spacer"></div>
+
+    <div class="metric-grid">
+        <article class="metric-card">
+            <span class="metric-label">
+                Revenue to Date
+            </span>
+
+            <strong class="metric-value">
+                ${{ score.revenue|floatformat:0 }}
+            </strong>
+
+            <span class="metric-note">
+                AOP target:
+                ${{ annual_plan.effective_revenue_target|floatformat:0 }}
+            </span>
+        </article>
+
+        <article class="metric-card">
+            <span class="metric-label">
+                Operating Expense
+            </span>
+
+            <strong class="metric-value">
+                ${{ score.operating_expense|floatformat:0 }}
+            </strong>
+
+            <span class="metric-note">
+                AOP budget:
+                ${{ annual_plan.effective_operating_budget|floatformat:0 }}
+            </span>
+        </article>
+
+        <article class="metric-card">
+            <span class="metric-label">
+                Profit to Date
+            </span>
+
+            <strong class="metric-value">
+                ${{ score.profit|floatformat:0 }}
+            </strong>
+
+            <span class="metric-note">
+                Revenue less COGS, manufacturing overhead, and year-end inventory write-off
+            </span>
+        </article>
+
+    </div>
+{% endif %}
+
+<div class="section-spacer"></div>
+
+<div class="result-products">
+    {% for result in result_rows %}
+        {% with line=result.line %}
+            <article class="result-product">
+                <header class="result-product-header">
+                    <div>
+                        <div
+                            class="eyebrow"
+                            style="margin-bottom:7px;"
+                        >
+                            Product Result
+                        </div>
+
+                        <h2>{{ line.product.name }}</h2>
+                    </div>
+
+                    <div class="result-revenue">
+                        <span>Revenue</span>
+
+                        <strong>
+                            ${{ line.revenue|floatformat:0 }}
+                        </strong>
+                    </div>
+                </header>
+
+                <div class="result-product-body">
+                    <div class="forecast-comparison">
+
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Beginning Inventory</span>
+
+                            <strong>
+                                {{ line.beginning_inventory_units|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Replenished</span>
+
+                            <strong>
+                                {{ line.replenishment_units|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Available</span>
+
+                            <strong>
+                                {{ line.available_inventory_units|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <div class="forecast-comparison">
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Realized Demand</span>
+
+                            <strong>
+                                {{ line.adjusted_demand_units|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Sold</span>
+
+                            <strong>
+                                {{ line.units_sold|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="forecast-comparison-item adjusted">
+                            <span>Ending</span>
+
+                            <strong>
+                                {{ line.ending_inventory_units|floatformat:0 }}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="result-detail-grid">
+                        <div class="result-detail emphasis">
+                            <span>Lost Sales</span>
+
+                            <strong>
+                                {{ line.lost_sales_units|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Selling Price</span>
+
+                            <strong>
+                                ${{ line.selling_price|floatformat:2 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Sales Credit Collected</span>
+
+                            <strong>
+                                ${{ line.sales_credit_collected|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Variable COGS</span>
+
+                            <strong>
+                                ${{ line.variable_production_cost|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Labor Cost Absorbed</span>
+
+                            <strong>
+                                ${{ line.labor_fixed_cost|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Maintenance Cost Absorbed</span>
+
+                            <strong>
+                                ${{ line.maintenance_fixed_cost|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Holding Cost</span>
+
+                            <strong>
+                                ${{ line.holding_cost|floatformat:0 }}
+                            </strong>
+
+                            <span style="margin-top:5px;text-transform:none;letter-spacing:0;font-weight:600;">
+                                Operational inventory measure
+                            </span>
+                        </div>
+
+                        <div class="result-detail">
+                            <span>Product Contribution</span>
+
+                            <strong>
+                                ${{ line.contribution|floatformat:0 }}
+                            </strong>
+
+                            <span style="margin-top:5px;text-transform:none;letter-spacing:0;font-weight:600;">
+                                Before company-level manufacturing overhead
+                            </span>
+                        </div>
+
+                        <div class="result-detail full-width emphasis">
+                            <span>Cost of Goods Sold</span>
+
+                            <strong>
+                                ${{ line.total_production_cost|floatformat:0 }}
+                            </strong>
+                        </div>
+
+                        {% if month == 8 and line.inventory_write_off > 0 %}
+                            <div class="result-detail full-width emphasis">
+                                <span>Inventory Write-off</span>
+
+                                <strong>
+                                    ${{ line.inventory_write_off|floatformat:0 }}
+                                </strong>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endwith %}
+    {% empty %}
+        <div class="empty-state">
+            <h3>No product results available</h3>
+
+            <p>
+                No finalized product-decision records were found for
+                this simulation month.
+            </p>
+        </div>
+    {% endfor %}
+</div>
+
+{% if month == 8 %}
+    <div class="section-spacer"></div>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="eyebrow">
+                    Fiscal Year Close
+                </div>
+
+                <h2>
+                    August accounting close
+                </h2>
+
+                <p>
+                    The final month closes the annual fixed-cost absorption
+                    cycle. Any fixed manufacturing cost not absorbed through
+                    annual sales is recognized as Manufacturing Overhead.
+                    Any remaining inventory is written off separately at its
+                    applicable production cost.
+                </p>
+            </div>
+
+            <span class="badge badge-gold">
+                Year-End Adjustment
+            </span>
+        </div>
+
+        <div class="panel-body">
+            <div class="metric-grid">
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Manufacturing Overhead
+                    </span>
+
+                    <strong class="metric-value">
+                        ${{ decision.manufacturing_overhead|floatformat:0 }}
+                    </strong>
+
+                    <span class="metric-note">
+                        Unabsorbed AOP fixed manufacturing cost
+                    </span>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Operating Expense to Date
+                    </span>
+
+                    <strong class="metric-value">
+                        ${{ score.operating_expense|floatformat:0 }}
+                    </strong>
+
+                    <span class="metric-note">
+                        COGS + manufacturing overhead + inventory write-off
+                    </span>
+                </article>
+
+                <article class="metric-card">
+                    <span class="metric-label">
+                        Profit After Year-End Close
+                    </span>
+
+                    <strong class="metric-value">
+                        ${{ score.profit|floatformat:0 }}
+                    </strong>
+
+                    <span class="metric-note">
+                        After August closing adjustments
+                    </span>
+                </article>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<div class="section-spacer"></div>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="eyebrow">
+                Annual Demand Outlook
+            </div>
+
+            <h2>
+                Realized demand and updated forecast after
+                {{ decision.get_month_display }}
+            </h2>
+
+            <p>
+                The fiscal-year horizon remains fixed from September through
+                August. Completed months show realized demand after the pricing
+                and operating effects of your decisions. Remaining months show
+                the latest forecast outlook released after
+                {{ decision.get_month_display }}.
+            </p>
+        </div>
+
+        {% if has_forecast_outlook %}
+            <span class="badge badge-teal">
+                Updated After:
+                {{ decision.get_month_display }}
+            </span>
+        {% else %}
+            <span class="badge badge-green">
+                Full Year Realized
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="panel-body">
+        <div class="table-wrap">
+            <table class="data-table annual-outlook-table">
+                <thead>
+                    <tr>
+                        <th class="product-column" rowspan="2">
+                            Product
+                        </th>
+
+                        {% if realized_colspan %}
+                            <th
+                                class="annual-outlook-group realized"
+                                colspan="{{ realized_colspan }}"
+                            >
+                                Realized
+                            </th>
+                        {% endif %}
+
+                        {% if forecast_colspan %}
+                            <th
+                                class="annual-outlook-group forecast"
+                                colspan="{{ forecast_colspan }}"
+                            >
+                                Forecast
+                            </th>
+                        {% endif %}
+                    </tr>
+
+                    <tr>
+                        {% for month_column in annual_outlook_months %}
+                            <th
+                                class="
+                                    annual-outlook-month
+                                    {% if month_column.is_realized %}
+                                        realized
+                                    {% else %}
+                                        forecast
+                                    {% endif %}
+                                "
+                            >
+                                {{ month_column.month_short }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in annual_outlook_rows %}
+                        <tr>
+                            <td class="product-column">
+                                <strong>{{ row.product.name }}</strong>
+                            </td>
+
+                            {% for cell in row.cells %}
+                                <td
+                                    class="
+                                        annual-outlook-value
+                                        {% if cell.is_realized %}
+                                            realized
+                                        {% else %}
+                                            forecast
+                                        {% endif %}
+                                    "
+                                >
+                                    {% if cell.value is not None %}
+                                        <strong>
+                                            {{ cell.value|floatformat:0 }}
+                                        </strong>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="13" class="text-center">
+                                No annual demand outlook is available.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="button-row">
+            {% if next_month %}
+                <a
+                    href="{% url 'plan_month' code=game.code year=scenario_year.year_number month=next_month %}"
+                    class="btn btn-primary"
+                >
+                    Begin {{ next_month_name }} S&amp;OP
+                </a>
+            {% else %}
+                <a
+                    href="{% url 'game_dashboard' code=game.code %}"
+                    class="btn btn-primary"
+                >
+                    View AOP Performance Review
+                </a>
+            {% endif %}
+
+            <a
+                href="{% url 'game_dashboard' code=game.code %}"
+                class="btn btn-light"
+            >
+                Return to Dashboard
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

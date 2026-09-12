@@ -1,0 +1,4161 @@
+{% extends "simulation/base.html" %}
+{% load static %}
+
+{% block title %}
+    Year {{ scenario_year.year_number }} Annual Operating Plan | {{ game.name }}
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+    /* =============================================================
+       BOARDROOM SHELL
+       ============================================================= */
+
+    .boardroom-shell {
+        position: relative;
+        overflow: hidden;
+        border-radius: 28px;
+        background:
+            radial-gradient(
+                circle at 86% 8%,
+                rgba(45, 212, 191, 0.15),
+                transparent 28rem
+            ),
+            linear-gradient(
+                135deg,
+                #07121d 0%,
+                #0c2232 55%,
+                #12414c 100%
+            );
+        box-shadow: var(--shadow-lg);
+    }
+
+    .boardroom-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 18px 24px;
+        border-bottom:
+            1px solid
+            rgba(255, 255, 255, 0.09);
+    }
+
+    .boardroom-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .meeting-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #45d5bd;
+        box-shadow:
+            0 0 18px
+            rgba(69, 213, 189, 0.65);
+    }
+
+    .meeting-title-small {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.76
+            );
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .meeting-status {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.45
+            );
+        font-size: 0.72rem;
+    }
+
+    .boardroom-main {
+        display: grid;
+        grid-template-columns:
+            minmax(250px, 0.70fr)
+            minmax(0, 2fr);
+        min-height: 760px;
+    }
+
+
+    /* =============================================================
+       SIDEBAR / BOARD MEMBERS
+       ============================================================= */
+
+    .board-sidebar {
+        padding: 24px 18px;
+        border-right:
+            1px solid
+            rgba(255, 255, 255, 0.09);
+        background:
+            rgba(
+                0,
+                0,
+                0,
+                0.10
+            );
+    }
+
+    .board-sidebar-title {
+        margin-bottom: 14px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.42
+            );
+        font-size: 0.62rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .board-person {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.07
+            );
+        border-radius: 15px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.035
+            );
+        transition:
+            transform 0.25s ease,
+            border-color 0.25s ease,
+            background 0.25s ease;
+    }
+
+    .board-person.active {
+        transform: translateX(4px);
+        border-color:
+            rgba(
+                69,
+                213,
+                189,
+                0.46
+            );
+        background:
+            rgba(
+                69,
+                213,
+                189,
+                0.09
+            );
+    }
+
+    .person-photo {
+        width: 56px !important;
+        height: 56px !important;
+        min-width: 56px;
+        max-width: 56px;
+        min-height: 56px;
+        max-height: 56px;
+        display: block;
+        flex: 0 0 56px;
+        object-fit: cover;
+        object-position: center top;
+        border:
+            2px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.14
+            );
+        border-radius: 50%;
+        box-shadow:
+            0 8px 20px
+            rgba(
+                0,
+                0,
+                0,
+                0.25
+            );
+    }
+
+    .board-person.active
+    .person-photo {
+        border-color: #65d9c9;
+        box-shadow:
+            0 0 0 4px
+            rgba(
+                69,
+                213,
+                189,
+                0.10
+            ),
+            0 10px 24px
+            rgba(
+                0,
+                0,
+                0,
+                0.30
+            );
+    }
+
+    .person-name {
+        display: block;
+        color: white;
+        font-size: 0.82rem;
+        font-weight: 850;
+    }
+
+    .person-role {
+        display: block;
+        margin-top: 2px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.43
+            );
+        font-size: 0.60rem;
+        line-height: 1.4;
+    }
+
+    .person-state {
+        display: block;
+        margin-top: 5px;
+        color: #72e0cf;
+        font-size: 0.56rem;
+        font-weight: 850;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+
+    /* =============================================================
+       AGENDA
+       ============================================================= */
+
+    .agenda {
+        margin-top: 25px;
+    }
+
+    .agenda-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 0;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.36
+            );
+        font-size: 0.69rem;
+    }
+
+    .agenda-item.active {
+        color: #7de1d3;
+        font-weight: 850;
+    }
+
+    .agenda-item.done {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.62
+            );
+    }
+
+    .agenda-number {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.07
+            );
+        font-size: 0.58rem;
+        font-weight: 850;
+    }
+
+
+    /* =============================================================
+       STAGES
+       ============================================================= */
+
+    .board-content {
+        min-width: 0;
+        padding: 30px;
+    }
+
+    .stage {
+        display: none;
+        animation:
+            stageIn
+            0.38s ease both;
+    }
+
+    .stage.active {
+        display: block;
+    }
+
+    @keyframes stageIn {
+        from {
+            opacity: 0;
+            transform:
+                translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform:
+                translateY(0);
+        }
+    }
+
+    .stage-heading {
+        margin-bottom: 18px;
+    }
+
+    .stage-kicker {
+        color: #60d7c6;
+        font-size: 0.64rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .stage-heading h2 {
+        margin: 5px 0 0;
+        color: white;
+        font-size: 1.9rem;
+        letter-spacing: -0.03em;
+    }
+
+    .stage-heading p {
+        max-width: 760px;
+        margin: 8px 0 0;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.52
+            );
+        line-height: 1.65;
+    }
+
+
+    /* =============================================================
+       CONVERSATION
+       ============================================================= */
+
+    .dialogue {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        margin-top: 19px;
+    }
+
+    .dialogue-photo {
+        width: 64px !important;
+        height: 64px !important;
+        min-width: 64px;
+        max-width: 64px;
+        min-height: 64px;
+        max-height: 64px;
+        display: block;
+        flex: 0 0 64px;
+        object-fit: cover;
+        object-position: center top;
+        border:
+            2px solid
+            rgba(
+                100,
+                220,
+                201,
+                0.38
+            );
+        border-radius: 50%;
+        box-shadow:
+            0 8px 20px
+            rgba(
+                0,
+                0,
+                0,
+                0.24
+            );
+    }
+
+    .dialogue-bubble {
+        max-width: 850px;
+        padding: 18px 20px;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.09
+            );
+        border-radius:
+            18px 18px 18px 6px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.055
+            );
+        box-shadow:
+            0 12px 30px
+            rgba(
+                0,
+                0,
+                0,
+                0.08
+            );
+    }
+
+    .dialogue-speaker {
+        color: #80e4d5;
+        font-size: 0.62rem;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .dialogue-text {
+        margin-top: 8px;
+        min-height: 24px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.84
+            );
+        font-size: 0.91rem;
+        line-height: 1.75;
+    }
+
+    .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1.05em;
+        margin-left: 2px;
+        vertical-align: middle;
+        background: #72e0cf;
+        animation:
+            blink
+            0.8s infinite;
+    }
+
+    @keyframes blink {
+        0%,
+        45% {
+            opacity: 1;
+        }
+
+        46%,
+        100% {
+            opacity: 0;
+        }
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+
+    /* =============================================================
+       EXECUTIVE PANELS
+       ============================================================= */
+
+    .stage-panel {
+        margin-top: 20px;
+        padding: 20px;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.08
+            );
+        border-radius: 18px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.045
+            );
+    }
+
+    .stage-panel-title {
+        color: white;
+        font-size: 0.98rem;
+        font-weight: 850;
+    }
+
+    .stage-panel-copy {
+        margin-top: 5px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.50
+            );
+        font-size: 0.76rem;
+        line-height: 1.55;
+    }
+
+    .product-cards {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+        gap: 14px;
+        margin-top: 16px;
+    }
+
+    .dark-card {
+        padding: 17px;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.08
+            );
+        border-radius: 15px;
+        background:
+            rgba(
+                0,
+                0,
+                0,
+                0.13
+            );
+    }
+
+    .dark-card h3 {
+        margin: 0;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .dark-card-sub {
+        margin-top: 3px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.38
+            );
+        font-size: 0.66rem;
+    }
+
+    .metric-row {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+        gap: 8px;
+        margin-top: 13px;
+    }
+
+    .dark-metric {
+        padding: 11px;
+        border-radius: 10px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.045
+            );
+    }
+
+    .dark-metric span {
+        display: block;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.38
+            );
+        font-size: 0.54rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .dark-metric strong {
+        display: block;
+        margin-top: 5px;
+        color: white;
+    }
+
+    .forecast-scroll {
+        overflow-x: auto;
+        margin-top: 14px;
+    }
+
+    .forecast-dark-table {
+        width: 100%;
+        min-width: 880px;
+        border-collapse: collapse;
+    }
+
+    .forecast-dark-table th,
+    .forecast-dark-table td {
+        padding: 9px 10px;
+        border-bottom:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.06
+            );
+        text-align: center;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.68
+            );
+        font-size: 0.71rem;
+    }
+
+    .forecast-dark-table th:first-child,
+    .forecast-dark-table td:first-child {
+        text-align: left;
+    }
+
+    .forecast-dark-table th {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.38
+            );
+        font-size: 0.58rem;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+
+    /* =============================================================
+       SALES CREDIT POLICY
+       ============================================================= */
+
+    .policy-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .policy-card {
+        position: relative;
+    }
+
+    .policy-card input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .policy-card label {
+        min-height: 220px;
+        display: block;
+        padding: 18px;
+        cursor: pointer;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.10
+            );
+        border-radius: 16px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.045
+            );
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            background 0.18s ease;
+    }
+
+    .policy-card label:hover {
+        transform:
+            translateY(-2px);
+        border-color:
+            rgba(
+                69,
+                213,
+                189,
+                0.32
+            );
+    }
+
+    .policy-card.board-preferred label {
+        border-color:
+            rgba(
+                232,
+                187,
+                88,
+                0.34
+            );
+    }
+
+    .board-preferred-note {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        color: #f2c965;
+        background:
+            rgba(
+                232,
+                187,
+                88,
+                0.10
+            );
+        font-size: 0.58rem;
+        font-weight: 850;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+
+    .policy-card
+    input:checked
+    + label {
+        border-color: #46cdbc;
+        background:
+            rgba(
+                69,
+                213,
+                189,
+                0.10
+            );
+        box-shadow:
+            0 0 0 3px
+            rgba(
+                69,
+                213,
+                189,
+                0.08
+            );
+    }
+
+    .policy-rate {
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+    }
+
+    .policy-name {
+        margin-top: 2px;
+        color: #79dfd0;
+        font-size: 0.65rem;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .policy-detail {
+        margin-top: 15px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.52
+            );
+        font-size: 0.75rem;
+        line-height: 1.55;
+    }
+
+    .policy-products {
+        margin-top: 13px;
+        padding-top: 12px;
+        border-top:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.07
+            );
+    }
+
+    .policy-product-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 6px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.54
+            );
+        font-size: 0.68rem;
+    }
+
+    .policy-product-line strong {
+        color: white;
+    }
+
+
+    /* =============================================================
+       MAINTENANCE DECISION
+       ============================================================= */
+
+    .maintenance-choice-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .maintenance-option {
+        position: relative;
+    }
+
+    .maintenance-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .maintenance-option label {
+        min-height: 250px;
+        display: block;
+        padding: 19px;
+        cursor: pointer;
+        border:
+            2px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.09
+            );
+        border-radius: 17px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.04
+            );
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            background 0.18s ease,
+            box-shadow 0.18s ease;
+    }
+
+    .maintenance-option label:hover {
+        transform:
+            translateY(-2px);
+    }
+
+    .maintenance-option
+    input:checked
+    + label {
+        border-color: #57d7c4;
+        background:
+            rgba(
+                69,
+                213,
+                189,
+                0.10
+            );
+        box-shadow:
+            0 0 0 4px
+            rgba(
+                69,
+                213,
+                189,
+                0.08
+            );
+    }
+
+    .maintenance-option.risk
+    input:checked
+    + label {
+        border-color: #e99a77;
+        background:
+            rgba(
+                225,
+                118,
+                84,
+                0.09
+            );
+        box-shadow:
+            0 0 0 4px
+            rgba(
+                225,
+                118,
+                84,
+                0.07
+            );
+    }
+
+    .maintenance-option h3 {
+        margin: 11px 0 0;
+        color: white;
+    }
+
+    .maintenance-option p {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.50
+            );
+        font-size: 0.76rem;
+        line-height: 1.6;
+    }
+
+    .maintenance-product {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 9px 10px;
+        border-radius: 9px;
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.045
+            );
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.55
+            );
+        font-size: 0.69rem;
+    }
+
+    .maintenance-product strong {
+        color: white;
+    }
+
+
+    /* =============================================================
+       ANNUAL OPERATING PLAN SUMMARY / RESOLUTION
+       ============================================================= */
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .summary-card {
+        padding: 14px;
+        border-radius: 12px;
+        background:
+            rgba(
+                0,
+                0,
+                0,
+                0.16
+            );
+    }
+
+    .summary-card span {
+        display: block;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.38
+            );
+        font-size: 0.56rem;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .summary-card strong {
+        display: block;
+        margin-top: 6px;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .decision-note {
+        margin-top: 16px;
+        padding: 15px 17px;
+        border-left:
+            3px solid
+            #e8bb58;
+        border-radius: 10px;
+        background:
+            rgba(
+                232,
+                187,
+                88,
+                0.07
+            );
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.64
+            );
+        font-size: 0.76rem;
+        line-height: 1.65;
+    }
+
+    .board-resolution {
+        padding: 22px;
+        border:
+            1px solid
+            rgba(
+                69,
+                213,
+                189,
+                0.20
+            );
+        border-radius: 18px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(
+                    69,
+                    213,
+                    189,
+                    0.09
+                ),
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.035
+                )
+            );
+    }
+
+    .resolution-title {
+        color: white;
+        font-size: 1.3rem;
+        font-weight: 900;
+    }
+
+    .resolution-copy {
+        max-width: 730px;
+        margin-top: 7px;
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.52
+            );
+        line-height: 1.6;
+    }
+
+    .resolution-list {
+        display: grid;
+        gap: 9px;
+        margin-top: 18px;
+    }
+
+    .resolution-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        padding: 11px 13px;
+        border-radius: 10px;
+        background:
+            rgba(
+                0,
+                0,
+                0,
+                0.14
+            );
+    }
+
+    .resolution-line span {
+        color:
+            rgba(
+                255,
+                255,
+                255,
+                0.44
+            );
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .resolution-line strong {
+        color: white;
+    }
+
+
+    /* =============================================================
+       BUTTONS
+       ============================================================= */
+
+    .stage-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+    }
+
+    .board-btn {
+        min-height: 43px;
+        padding: 0 17px;
+        border: none;
+        border-radius: 11px;
+        cursor: pointer;
+        font-weight: 850;
+        transition:
+            transform 0.15s ease,
+            opacity 0.15s ease;
+    }
+
+    .board-btn:hover {
+        transform:
+            translateY(-1px);
+    }
+
+    .board-btn-primary {
+        color: #05251f;
+        background: #63d7c6;
+    }
+
+    .board-btn-secondary {
+        color: white;
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.11
+            );
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.05
+            );
+    }
+
+    .board-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.42;
+        transform: none;
+    }
+
+
+    .annual-plan-form-alert {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border: 1px solid rgba(225, 118, 84, 0.28);
+        border-left: 4px solid #e99a77;
+        border-radius: 12px;
+        background: rgba(225, 118, 84, 0.08);
+        color: #6b2f1f;
+    }
+
+    .annual-plan-form-alert strong {
+        font-weight: 900;
+    }
+
+    .annual-plan-form-alert span {
+        font-size: 0.82rem;
+        line-height: 1.5;
+    }
+
+
+    /* =============================================================
+       RESPONSIVE
+       ============================================================= */
+
+    @media (max-width: 1050px) {
+        .boardroom-main {
+            grid-template-columns: 1fr;
+        }
+
+        .board-sidebar {
+            border-right: none;
+            border-bottom:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.09
+                );
+        }
+
+        .product-cards,
+        .policy-grid,
+        .maintenance-choice-grid,
+        .summary-grid {
+            grid-template-columns:
+                1fr 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .board-content {
+            padding: 20px 15px;
+        }
+
+        .product-cards,
+        .policy-grid,
+        .maintenance-choice-grid,
+        .summary-grid,
+        .metric-row {
+            grid-template-columns: 1fr;
+        }
+
+        .stage-actions {
+            flex-direction: column;
+        }
+
+        .board-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<form
+    method="post"
+    id="annual-plan-form"
+    novalidate
+>
+    {% csrf_token %}
+
+    {% if form.errors %}
+        <div class="annual-plan-form-alert">
+            <strong>
+                The Annual Operating Plan is incomplete.
+            </strong>
+            <span>
+                Please review the highlighted annual decisions below
+                and approve the plan again.
+            </span>
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <section
+        class="boardroom-shell"
+        id="boardroom"
+    >
+
+        <div class="boardroom-topbar">
+
+            <div class="boardroom-topbar-left">
+                <span class="meeting-dot"></span>
+
+                <span class="meeting-title-small">
+                    Summit Bikes
+                    · Year {{ scenario_year.year_number }}
+                    Annual Operating Plan
+                </span>
+            </div>
+
+            <span class="meeting-status">
+                August · IBP Annual Planning Stage
+            </span>
+
+        </div>
+
+
+        <div class="boardroom-main">
+
+            {# ===================================================== #}
+            {# SIDEBAR                                               #}
+            {# ===================================================== #}
+
+            <aside class="board-sidebar">
+
+                <div class="board-sidebar-title">
+                    Board Members
+                </div>
+
+
+                <div
+                    class="board-person active"
+                    data-person-card="clarke"
+                >
+                    <img
+                        src="{% static 'simulation/board/clarke.png' %}"
+                        alt="Mrs Clarke"
+                        class="person-photo"
+                    >
+
+                    <div>
+                        <span class="person-name">
+                            Mrs Clarke
+                        </span>
+
+                        <span class="person-role">
+                            Chair
+                        </span>
+
+                        <span class="person-state">
+                            Speaking
+                        </span>
+                    </div>
+                </div>
+
+
+                <div
+                    class="board-person"
+                    data-person-card="daniels"
+                >
+                    <img
+                        src="{% static 'simulation/board/daniels.png' %}"
+                        alt="Mr Daniels"
+                        class="person-photo"
+                    >
+
+                    <div>
+                        <span class="person-name">
+                            Mr Daniels
+                        </span>
+
+                        <span class="person-role">
+                            Board Member · Commercial
+                        </span>
+
+                        <span class="person-state">
+                            Waiting
+                        </span>
+                    </div>
+                </div>
+
+
+                <div
+                    class="board-person"
+                    data-person-card="nauta"
+                >
+                    <img
+                        src="{% static 'simulation/board/nauta.png' %}"
+                        alt="Ms Nauta"
+                        class="person-photo"
+                    >
+
+                    <div>
+                        <span class="person-name">
+                            Ms Nauta
+                        </span>
+
+                        <span class="person-role">
+                            Board Member · Operations
+                        </span>
+
+                        <span class="person-state">
+                            Waiting
+                        </span>
+                    </div>
+                </div>
+
+
+                <div class="agenda">
+
+                    <div class="board-sidebar-title">
+                        Meeting Agenda
+                    </div>
+
+                    <div
+                        class="agenda-item active"
+                        data-agenda="0"
+                    >
+                        <span class="agenda-number">
+                            1
+                        </span>
+
+                        {% if is_year_2 %}
+                            Year 2 Strategy
+                        {% else %}
+                            Introductions
+                        {% endif %}
+                    </div>
+
+                    <div
+                        class="agenda-item"
+                        data-agenda="1"
+                    >
+                        <span class="agenda-number">
+                            2
+                        </span>
+
+                        Market & Revenue Commitments
+                    </div>
+
+                    <div
+                        class="agenda-item"
+                        data-agenda="2"
+                    >
+                        <span class="agenda-number">
+                            3
+                        </span>
+
+                        Commercial Policy
+                    </div>
+
+                    <div
+                        class="agenda-item"
+                        data-agenda="3"
+                    >
+                        <span class="agenda-number">
+                            4
+                        </span>
+
+                        Operations & Year-End Risk
+                    </div>
+
+                    <div
+                        class="agenda-item"
+                        data-agenda="4"
+                    >
+                        <span class="agenda-number">
+                            5
+                        </span>
+
+                        AOP Resolution
+                    </div>
+
+                </div>
+
+            </aside>
+
+
+            {# ===================================================== #}
+            {# CONTENT                                               #}
+            {# ===================================================== #}
+
+            <main class="board-content">
+
+
+                {# ================================================= #}
+                {# STAGE 0 — OPENING                                 #}
+                {# ================================================= #}
+
+                <section
+                    class="stage active"
+                    data-stage="0"
+                >
+
+                    {% if is_year_2 %}
+
+                        <div class="stage-heading">
+
+                            <span class="stage-kicker">
+                                Year 2 Strategy Session
+                            </span>
+
+                            <h2>
+                                Welcome back to the boardroom.
+                            </h2>
+
+                            <p>
+                                The introductions are behind us.
+                                This meeting begins directly with the
+                                strategic changes facing Summit Bikes
+                                in Year 2.
+                            </p>
+
+                        </div>
+
+
+                        <div
+                            class="dialogue"
+                            data-opening-dialogue
+                            data-person="clarke"
+                            data-text="Welcome back. We have completed our first year together, so there is no need to introduce the board again. Year 2 changes both the scale and the risk of the business. We will begin with market expansion and your annual revenue commitment, then review commercial flexibility, the wider demand uncertainty, replenishment responsibility, and maintenance."
+                        >
+                            <img
+                                src="{% static 'simulation/board/clarke.png' %}"
+                                alt="Mrs Clarke"
+                                class="dialogue-photo"
+                            >
+
+                            <div class="dialogue-bubble">
+
+                                <div class="dialogue-speaker">
+                                    Mrs Clarke · Chair
+                                </div>
+
+                                <div class="dialogue-text"></div>
+
+                            </div>
+                        </div>
+
+
+                        <div
+                            class="dialogue hidden"
+                            data-opening-dialogue
+                            data-person="nauta"
+                            data-text="Before we move into the Year 2 decisions, remember the year-end product transition. The next fiscal year's bikes will again use upgraded drivetrain technology, so bikes left after August will have almost no salvage value. With wider demand uncertainty this year, pricing is not only a commercial lever — it may also be necessary to liquidate excess inventory before the fiscal year closes."
+                        >
+                            <img
+                                src="{% static 'simulation/board/nauta.png' %}"
+                                alt="Ms Nauta"
+                                class="dialogue-photo"
+                            >
+
+                            <div class="dialogue-bubble">
+                                <div class="dialogue-speaker">
+                                    Ms Nauta · Operations
+                                </div>
+
+                                <div class="dialogue-text"></div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            class="stage-actions hidden"
+                            id="openingActions"
+                        >
+                            <button
+                                type="button"
+                                class="board-btn board-btn-secondary"
+                                id="redoOpening"
+                            >
+                                ↻ Redo Opening
+                            </button>
+
+                            <button
+                                type="button"
+                                class="board-btn board-btn-primary"
+                                data-go-stage="1"
+                            >
+                                Begin Year 2 Briefing →
+                            </button>
+                        </div>
+
+                    {% else %}
+
+                        <div class="stage-heading">
+
+                            <span class="stage-kicker">
+                                Opening Session
+                            </span>
+
+                            <h2>
+                                Welcome to the boardroom.
+                            </h2>
+
+                            <p>
+                                Before establishing the Annual Operating Plan,
+                                the three board members would like to
+                                introduce themselves.
+                            </p>
+
+                        </div>
+
+
+                        <div
+                            class="dialogue"
+                            data-opening-dialogue
+                            data-person="clarke"
+                            data-text="Welcome. I am Mrs Clarke, Chair of the Board. I will be assessing the overall performance of this business — whether revenue targets are achieved, whether our commercial commitments are met, and whether your strategy creates sustainable results."
+                        >
+                            <img
+                                src="{% static 'simulation/board/clarke.png' %}"
+                                alt="Mrs Clarke"
+                                class="dialogue-photo"
+                            >
+
+                            <div class="dialogue-bubble">
+                                <div class="dialogue-speaker">
+                                    Mrs Clarke · Chair
+                                </div>
+
+                                <div class="dialogue-text"></div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            class="dialogue hidden"
+                            data-opening-dialogue
+                            data-person="daniels"
+                            data-text="I am Mr Daniels. My focus is commercial performance and the monthly P&amp;L. I will be watching how you use pricing, demand response, and sales incentives to maximize sales credit and financial performance."
+                        >
+                            <img
+                                src="{% static 'simulation/board/daniels.png' %}"
+                                alt="Mr Daniels"
+                                class="dialogue-photo"
+                            >
+
+                            <div class="dialogue-bubble">
+                                <div class="dialogue-speaker">
+                                    Mr Daniels · Commercial
+                                </div>
+
+                                <div class="dialogue-text"></div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            class="dialogue hidden"
+                            data-opening-dialogue
+                            data-person="nauta"
+                            data-text="I am Ms Nauta. I will focus on operations — forecasting, inventory, replenishment, maintenance, and whether working capital is being used intelligently. There is one important year-end constraint you need to know from the beginning: this product line will be upgraded for the next fiscal year with improved drivetrain technology. Bikes remaining after the end of August will therefore have almost no salvage value. Your monthly replenishment and pricing decisions should avoid carrying unnecessary inventory into year end."
+                        >
+                            <img
+                                src="{% static 'simulation/board/nauta.png' %}"
+                                alt="Ms Nauta"
+                                class="dialogue-photo"
+                            >
+
+                            <div class="dialogue-bubble">
+                                <div class="dialogue-speaker">
+                                    Ms Nauta · Operations
+                                </div>
+
+                                <div class="dialogue-text"></div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            class="stage-actions hidden"
+                            id="openingActions"
+                        >
+                            <button
+                                type="button"
+                                class="board-btn board-btn-secondary"
+                                id="redoOpening"
+                            >
+                                ↻ Redo Opening
+                            </button>
+
+                            <button
+                                type="button"
+                                class="board-btn board-btn-primary"
+                                data-go-stage="1"
+                            >
+                                Begin Board Briefing →
+                            </button>
+                        </div>
+
+                    {% endif %}
+
+                </section>
+
+
+                {# ================================================= #}
+                {# STAGE 1 — MRS CLARKE                              #}
+                {# ================================================= #}
+
+                <section
+                    class="stage"
+                    data-stage="1"
+                >
+
+                    <div class="stage-heading">
+
+                        <span class="stage-kicker">
+                            Mrs Clarke · Chair
+                        </span>
+
+                        <h2>
+                            Market outlook and annual commitments
+                        </h2>
+
+                        <p>
+                            Product portfolio, market outlook,
+                            revenue commitment, and the financial
+                            guardrails for Year
+                            {{ scenario_year.year_number }}.
+                        </p>
+
+                    </div>
+
+
+                    {# CLARKE BUBBLE 1 #}
+
+                    <div
+                        class="dialogue"
+                        id="clarkeBubble1"
+                        data-person="clarke"
+                        data-text="{% if is_year_2 %}The first year gave us solid sales performance, and the board has decided to expand the market for our mountain-bike line. With that expansion, the baseline sales opportunity is expected to be approximately 85 percent higher than in Year 1. Ultimate Mountain and Tough Track remain our two products. The figures below show the new rolling-horizon outlook for the coming fiscal year.{% else %}Let us begin with the business itself. Summit Bikes is launching a new line of adult mountain bikes. We currently have two products: Ultimate Mountain and Tough Track. The figures below show their standard selling prices, variable production costs, and our initial demand forecast for the coming fiscal year.{% endif %}"
+                    >
+                        <img
+                            src="{% static 'simulation/board/clarke.png' %}"
+                            alt="Mrs Clarke"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Mrs Clarke
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="hidden"
+                        id="clarkeMarketPanel"
+                    >
+
+                        <div class="product-cards">
+
+                            {% for row in product_rows %}
+
+                                <article class="dark-card">
+
+                                    <h3>
+                                        {{ row.product.name }}
+                                    </h3>
+
+                                    <div class="dark-card-sub">
+                                        Adult Mountain Bike
+                                    </div>
+
+                                    <div class="metric-row">
+
+                                        <div class="dark-metric">
+                                            <span>
+                                                Standard Price
+                                            </span>
+
+                                            <strong>
+                                                ${{ row.standard_price|floatformat:0 }}
+                                            </strong>
+                                        </div>
+
+                                        <div class="dark-metric">
+                                            <span>
+                                                Variable Cost
+                                            </span>
+
+                                            <strong>
+                                                ${{ row.variable_unit_cost|floatformat:0 }}
+                                            </strong>
+                                        </div>
+
+                                        <div class="dark-metric">
+                                            <span>
+                                                Annual Forecast
+                                            </span>
+
+                                            <strong>
+                                                {{ row.annual_forecast_units|floatformat:0 }}
+                                            </strong>
+                                        </div>
+
+                                    </div>
+
+                                </article>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="stage-panel">
+
+                            <div class="stage-panel-title">
+                                August Rolling-Horizon Forecast
+                            </div>
+
+                            <div class="stage-panel-copy">
+                                This is the initial September–August
+                                forecast. The forecast will be refreshed
+                                every month as new information arrives.
+                            </div>
+
+                            <div class="forecast-scroll">
+
+                                <table class="forecast-dark-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Product
+                                            </th>
+
+                                            {% for product, rows in rolling.items %}
+                                                {% if forloop.first %}
+                                                    {% for row in rows %}
+                                                        <th>
+                                                            {{ row.get_forecast_month_display }}
+                                                        </th>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {% for product, rows in rolling.items %}
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        {{ product.name }}
+                                                    </strong>
+                                                </td>
+
+                                                {% for row in rows %}
+                                                    <td>
+                                                        {{ row.forecast_units }}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="clarkeNext1"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="clarkeRevenueNext"
+                        >
+                            Next →
+                        </button>
+                    </div>
+
+
+                    {# CLARKE BUBBLE 2 #}
+
+                    <div
+                        class="dialogue hidden"
+                        id="clarkeBubble2"
+                        data-person="clarke"
+                        data-text="{% if is_year_2 %}Now I need you to choose the Year 2 revenue commitment. The baseline revenue target is the Year 1 revenue target increased by 85 percent. You may commit to that baseline, 1 percent above the baseline, or 2 percent above the baseline. The board believes the 2 percent growth option is achievable, but the decision is yours. Each revenue commitment carries its corresponding operating budget: the Year 1 fixed-cost component remains unchanged, while the variable-cost component grows with the selected sales ambition. Please choose one of the three alternatives below.{% else %}Now let us discuss the annual mandate. For Year 1, the board has already established the revenue target. In Years 2 and 3, revenue ambition will be open to further discussion and you will participate in choosing among alternative targets.{% endif %}"
+                    >
+                        <img
+                            src="{% static 'simulation/board/clarke.png' %}"
+                            alt="Mrs Clarke"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Mrs Clarke
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="hidden"
+                        id="clarkeRevenuePanel"
+                    >
+
+                        {% if is_year_2 %}
+
+                            <div class="policy-grid">
+
+                                {% for option in revenue_budget_options %}
+
+                                    <div
+                                        class="policy-card
+                                        {% if option.board_preferred %}
+                                            board-preferred
+                                        {% endif %}"
+                                    >
+
+                                        <input
+                                            type="radio"
+                                            name="revenue_budget_option"
+                                            value="{{ option.code }}"
+                                            id="revenue_{{ option.code }}"
+                                            {% if form.revenue_budget_option.value|stringformat:"s" == option.code|stringformat:"s" %}
+                                                checked
+                                            {% endif %}
+                                        >
+
+                                        <label
+                                            for="revenue_{{ option.code }}"
+                                            data-revenue-label
+                                            data-revenue-target="{{ option.revenue_target }}"
+                                            data-operating-budget="{{ option.operating_budget }}"
+                                        >
+
+                                            <div class="policy-rate">
+                                                {% if option.code == "BASELINE" %}
+                                                    Baseline
+                                                {% elif option.code == "PLUS_1" %}
+                                                    +1%
+                                                {% else %}
+                                                    +2%
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="policy-name">
+                                                Revenue Commitment
+                                            </div>
+
+                                            <div class="policy-detail">
+                                                Revenue target:
+                                                <strong>
+                                                    ${{ option.revenue_target|floatformat:0 }}
+                                                </strong>
+
+                                                <br>
+
+                                                Operating budget:
+                                                <strong>
+                                                    ${{ option.operating_budget|floatformat:0 }}
+                                                </strong>
+                                            </div>
+
+                                            {% if option.board_preferred %}
+                                                <span class="board-preferred-note">
+                                                    Board believes this is achievable
+                                                </span>
+                                            {% endif %}
+
+                                        </label>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                            {{ form.revenue_budget_option.errors }}
+
+                            <div class="summary-grid">
+
+                                <div class="summary-card">
+                                    <span>
+                                        Selected Revenue Target
+                                    </span>
+
+                                    <strong id="selectedRevenueTarget">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Selected Operating Budget
+                                    </span>
+
+                                    <strong id="selectedOperatingBudget">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Market Expansion
+                                    </span>
+
+                                    <strong>
+                                        +{{ market_expansion_percent|floatformat:0 }}%
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Board Preference
+                                    </span>
+
+                                    <strong>
+                                        Baseline +2%
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        {% else %}
+
+                            <div class="summary-grid">
+
+                                <div class="summary-card">
+                                    <span>
+                                        Revenue Target
+                                    </span>
+
+                                    <strong id="selectedRevenueTarget">
+                                        ${{ effective_revenue_target|floatformat:0 }}
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Operating Budget
+                                    </span>
+
+                                    <strong id="selectedOperatingBudget">
+                                        ${{ effective_operating_budget|floatformat:0 }}
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Products
+                                    </span>
+
+                                    <strong>
+                                        {{ products|length }}
+                                    </strong>
+                                </div>
+
+                                <div class="summary-card">
+                                    <span>
+                                        Opening Inventory
+                                    </span>
+
+                                    <strong>
+                                        {{ scenario_year.initial_inventory_units }}
+                                        / product
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="clarkeFinish"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-secondary"
+                            data-go-stage="0"
+                        >
+                            ← Opening
+                        </button>
+
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="continueToDaniels"
+                            data-go-stage="2"
+                            {% if is_year_2 %}
+                                disabled
+                            {% endif %}
+                        >
+                            Continue to Mr Daniels →
+                        </button>
+                    </div>
+
+                </section>
+
+
+                {# ================================================= #}
+                {# STAGE 2 — MR DANIELS                              #}
+                {# ================================================= #}
+
+                <section
+                    class="stage"
+                    data-stage="2"
+                >
+
+                    <div class="stage-heading">
+
+                        <span class="stage-kicker">
+                            Mr Daniels · Commercial
+                        </span>
+
+                        <h2>
+                            Pricing authority and sales incentives
+                        </h2>
+
+                        <p>
+                            The annual sales-credit policy determines
+                            both the commercial target and the pricing
+                            authority given to the sales organization.
+                        </p>
+
+                    </div>
+
+
+                    {# DANIELS BUBBLE 1 #}
+
+                    <div
+                        class="dialogue"
+                        id="danielsBubble1"
+                        data-person="daniels"
+                        data-text="{% if is_year_2 %}You already know how the sales-credit policy works from Year 1. The principle is unchanged: selling at the standard price preserves the full available sales credit, while discounting transfers part of that credit to the customer. What changes this year is the operating environment. With wider demand uncertainty, pricing may sometimes need to serve an inventory objective as well as a sales-credit objective.{% else %}Sales credit is an important tool for motivating the sales organization. When the team sells at the standard price, it earns the full available credit. If it discounts the product, part of that credit is effectively transferred to the customer.{% endif %}"
+                    >
+                        <img
+                            src="{% static 'simulation/board/daniels.png' %}"
+                            alt="Mr Daniels"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Mr Daniels
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="danielsNext1"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="danielsNextButton1"
+                        >
+                            Next →
+                        </button>
+                    </div>
+
+
+                    {# DANIELS BUBBLE 2 #}
+
+                    <div
+                        class="dialogue hidden"
+                        id="danielsBubble2"
+                        data-person="daniels"
+                        data-text="The percentage you choose has two consequences. First, it establishes the annual sales-credit target. Second, it determines how far the sales team is allowed to discount below standard price. A 5 percent policy means a 95 percent price floor; 10 percent means a 90 percent floor; and 20 percent means an 80 percent floor. Please choose one of the options: "
+                    >
+                        <img
+                            src="{% static 'simulation/board/daniels.png' %}"
+                            alt="Mr Daniels"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Mr Daniels
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="danielsNext2"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="danielsShowPolicy"
+                        >
+                            Review Policy Options →
+                        </button>
+                    </div>
+
+
+                    <div
+                        class="hidden"
+                        id="danielsPolicyPanel"
+                    >
+
+                        <div class="policy-grid">
+
+                            {% for option in sales_credit_options %}
+
+                                <div class="policy-card">
+
+                                    <input
+                                        type="radio"
+                                        name="sales_credit_rate"
+                                        value="{{ option.rate }}"
+                                        id="credit_{{ option.percent }}"
+                                        {% if form.sales_credit_rate.value|stringformat:"s" == option.rate|stringformat:"s" %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        for="credit_{{ option.percent }}"
+                                        data-credit-label
+                                        data-rate="{{ option.rate }}"
+                                        data-minimum-percent="{{ option.minimum_price_percent }}"
+                                    >
+
+                                        <div class="policy-rate">
+                                            {{ option.percent }}%
+                                        </div>
+
+                                        <div class="policy-name">
+
+                                            {% if option.percent == 5 %}
+                                                Tight Authority
+                                            {% elif option.percent == 10 %}
+                                                Balanced Authority
+                                            {% else %}
+                                                Broad Authority
+                                            {% endif %}
+
+                                        </div>
+
+                                        <div class="policy-detail">
+                                            Annual sales-credit target:
+                                            <strong
+                                                data-credit-target-display
+                                            >
+                                                ${{ option.target|floatformat:0 }}
+                                            </strong>
+
+                                            <br>
+
+                                            Minimum selling price:
+                                            <strong>
+                                                {{ option.minimum_price_percent }}%
+                                            </strong>
+                                            of standard.
+                                        </div>
+
+
+                                        <div class="policy-products">
+
+                                            {% for price_row in option.product_price_rows %}
+
+                                                <div class="policy-product-line">
+
+                                                    <span>
+                                                        {{ price_row.product.name }}
+                                                    </span>
+
+                                                    <strong>
+                                                        ${{ price_row.minimum_price|floatformat:0 }}
+                                                        floor
+                                                    </strong>
+
+                                                </div>
+
+                                            {% endfor %}
+
+                                        </div>
+
+                                    </label>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                        {{ form.sales_credit_rate.errors }}
+
+
+                        <div class="summary-grid">
+
+                            <div class="summary-card">
+                                <span>
+                                    Revenue Target
+                                </span>
+
+                                <strong id="resolutionRevenueTarget">
+                                    ${{ effective_revenue_target|floatformat:0 }}
+                                </strong>
+                            </div>
+
+                            <div class="summary-card">
+                                <span>
+                                    Selected Policy
+                                </span>
+
+                                <strong id="selectedCreditRate">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="summary-card">
+                                <span>
+                                    Sales Credit Target
+                                </span>
+
+                                <strong id="selectedCreditTarget">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="summary-card">
+                                <span>
+                                    Minimum Price
+                                </span>
+
+                                <strong id="selectedMinimumPrice">
+                                    —
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="decision-note">
+                            A larger credit allowance provides more
+                            commercial flexibility, but it also creates
+                            a more demanding annual sales-credit target.
+                            Pricing freedom should not be confused with
+                            permission to destroy product economics.
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="danielsFinish"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-secondary"
+                            data-go-stage="1"
+                        >
+                            ← Mrs Clarke
+                        </button>
+
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="continueToNauta"
+                            data-go-stage="3"
+                            disabled
+                        >
+                            Continue to Ms Nauta →
+                        </button>
+                    </div>
+
+                </section>
+
+
+                {# ================================================= #}
+                {# STAGE 3 — MS NAUTA                                #}
+                {# ================================================= #}
+
+                <section
+                    class="stage"
+                    data-stage="3"
+                >
+
+                    <div class="stage-heading">
+
+                        <span class="stage-kicker">
+                            Ms Nauta · Operations
+                        </span>
+
+                        <h2>
+                            Inventory discipline and maintenance
+                        </h2>
+
+                        <p>
+                            {% if is_year_2 %}
+                                Wider demand uncertainty, independent
+                                replenishment decisions, pricing as an
+                                inventory tool, and maintenance.
+                            {% else %}
+                                Forecast uncertainty, base-stock logic,
+                                and the operational consequences of your
+                                maintenance decision.
+                            {% endif %}
+                        </p>
+
+                    </div>
+
+
+                    {# NAUTA BUBBLE 1 #}
+
+                    <div
+                        class="dialogue"
+                        id="nautaBubble1"
+                        data-person="nauta"
+                        data-text="{% if is_year_2 %}Forecasting will be more demanding this year. We now expect realized demand to fall within approximately plus or minus 25 percent of the one-month-ahead mean forecast. Longer-range forecasts remain less reliable, so the rolling-horizon process is even more important. Every month you will receive an updated forecast for the remaining fiscal year, but you should expect substantially more uncertainty than you faced in Year 1.{% else %}Our next-month forecasts are comparatively accurate. We generally expect realized demand to remain within approximately plus or minus 10 percent of the one-month-ahead forecast. Longer-range forecasts are less reliable, which is why we invested in a rolling-horizon forecasting process. Every month you will receive an updated forecast for the remaining fiscal year.{% endif %}"
+                    >
+                        <img
+                            src="{% static 'simulation/board/nauta.png' %}"
+                            alt="Ms Nauta"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Ms Nauta
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="nautaNext1"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="nautaNextButton1"
+                        >
+                            Next →
+                        </button>
+                    </div>
+
+
+                    {# NAUTA BUBBLE 2 — BASE STOCK #}
+
+                    <div
+                        class="dialogue hidden"
+                        id="nautaBubble2"
+                        data-person="nauta"
+                        data-text="{% if is_year_2 %}You already learned the base-stock logic in Year 1, so this year we will not give you the ideal order quantity. You will see the demand range and the critical ratio, but you must determine replenishment yourself. With the wider uncertainty, excess inventory can accumulate. If that happens, do not treat the price that maximizes expected sales credit as an automatic answer. A strategic price reduction can increase demand and help liquidate excess inventory, even when it sacrifices some sales credit. Remember the price response used in this simulation: a 1 percent change in price produces a 2 percent change in realized demand in the opposite direction. You will need to balance pricing, inventory, and sales-credit objectives month by month.{% else %}When you make replenishment decisions, I do not expect you simply to order the mean forecast. Think in terms of a base-stock policy. The next-month forecast gives you a demand distribution, and the critical fractile should tell you where within that distribution your inventory target belongs. One question is especially important: which costs should actually enter that critical-fractile calculation? Think about the costs that change when one additional unit is produced and left unsold.{% endif %}"
+                    >
+                        <img
+                            src="{% static 'simulation/board/nauta.png' %}"
+                            alt="Ms Nauta"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Ms Nauta
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="nautaNext2"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="nautaNextButton2"
+                        >
+                            Next →
+                        </button>
+                    </div>
+
+
+                    {# NAUTA BUBBLE 3 — MAINTENANCE CHOICE #}
+
+                    <div
+                        class="dialogue hidden"
+                        id="nautaBubble3"
+                        data-person="nauta"
+                        data-text="There is one final operating decision for the year. You must decide whether to maintain the equipment or defer maintenance. Maintaining the equipment preserves quality, capacity, and market demand, but it keeps maintenance in the annual cost structure. Deferring maintenance lowers current production cost, but we expect supply-chain quality and capacity problems to reduce realized demand by 20 percent. Please choose one of the two alternatives below."
+                    >
+                        <img
+                            src="{% static 'simulation/board/nauta.png' %}"
+                            alt="Ms Nauta"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Ms Nauta
+                            </div>
+
+                            <div class="dialogue-text"></div>
+
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="maintenance-choice-grid hidden"
+                        id="maintenancePanel"
+                    >
+
+                        {# ========================================================= #}
+                        {# MAINTAIN EQUIPMENT #}
+                        {# skip_maintenance = False #}
+                        {# ========================================================= #}
+
+                        <div class="maintenance-option">
+
+                            <input
+                                type="radio"
+                                name="skip_maintenance"
+                                value="False"
+                                id="maintenance_keep"
+                                {% if form.skip_maintenance.value|stringformat:"s" == "False" %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <label
+                                for="maintenance_keep"
+                                data-maintenance-label="maintain"
+                            >
+
+                                <span class="badge badge-green">
+                                    Recommended Stability
+                                </span>
+
+                                <h3>
+                                    Maintain Equipment
+                                </h3>
+
+                                <p>
+                                    Complete the planned annual maintenance program.
+                                    Maintenance remains part of the production cost
+                                    structure, but product quality, operating capacity,
+                                    and expected market demand are protected.
+                                </p>
+
+
+                                {% for row in maintenance_product_rows %}
+
+                                    <div class="maintenance-product">
+
+                                        <span>
+                                            {{ row.product.name }}
+                                        </span>
+
+                                        <strong>
+                                            ${{ row.with_maintenance|floatformat:2 }}
+                                            / unit
+                                        </strong>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </label>
+
+                        </div>
+
+
+                        {# ========================================================= #}
+                        {# DEFER MAINTENANCE #}
+                        {# skip_maintenance = True #}
+                        {# ========================================================= #}
+
+                        <div class="maintenance-option risk">
+
+                            <input
+                                type="radio"
+                                name="skip_maintenance"
+                                value="True"
+                                id="maintenance_defer"
+                                {% if form.skip_maintenance.value|stringformat:"s" == "True" %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <label
+                                for="maintenance_defer"
+                                data-maintenance-label="defer"
+                            >
+
+                                <span class="badge badge-red">
+                                    Operating Risk
+                                </span>
+
+                                <h3>
+                                    Defer Maintenance
+                                </h3>
+
+                                <p>
+                                    Postpone the annual maintenance program.
+                                    This removes the maintenance allocation from
+                                    current product cost and releases budget, but
+                                    quality and capacity problems are expected to
+                                    reduce realized market demand by 20%.
+                                </p>
+
+
+                                {% for row in maintenance_product_rows %}
+
+                                    <div class="maintenance-product">
+
+                                        <span>
+                                            {{ row.product.name }}
+                                        </span>
+
+                                        <strong>
+                                            ${{ row.without_maintenance|floatformat:2 }}
+                                            / unit
+                                        </strong>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    {{ form.skip_maintenance.errors }}
+
+
+                    <div
+                        class="stage-actions hidden"
+                        id="nautaFinish"
+                    >
+                        <button
+                            type="button"
+                            class="board-btn board-btn-secondary"
+                            data-go-stage="2"
+                        >
+                            ← Mr Daniels
+                        </button>
+
+                        <button
+                            type="button"
+                            class="board-btn board-btn-primary"
+                            id="continueToResolution"
+                            data-go-stage="4"
+                            disabled
+                        >
+                            Review AOP Resolution →
+                        </button>
+                    </div>
+
+                </section>
+
+
+                {# ================================================= #}
+                {# STAGE 4 — ANNUAL OPERATING PLAN RESOLUTION       #}
+                {# ================================================= #}
+
+                <section
+                    class="stage"
+                    data-stage="4"
+                >
+
+                    <div class="stage-heading">
+
+                        <span class="stage-kicker">
+                            Annual Operating Plan Resolution
+                        </span>
+
+                        <h2>
+                            Confirm the Annual Operating Plan
+                        </h2>
+
+                        <p>
+                            Review the commitments that will remain
+                            in force throughout Year
+                            {{ scenario_year.year_number }}.
+                        </p>
+
+                    </div>
+
+
+                    <div class="board-resolution">
+
+                        <div class="resolution-title">
+                            Year {{ scenario_year.year_number }}
+                            Annual Operating Resolution
+                        </div>
+
+                        <div class="resolution-copy">
+                            The board has reviewed the commercial
+                            and operating policies proposed for the
+                            fiscal year. Once September results are
+                            finalized, these annual policies cannot
+                            be changed.
+                        </div>
+
+
+                        <div class="resolution-list">
+
+                            <div class="resolution-line">
+                                <span>
+                                    Revenue Target
+                                </span>
+
+                                <strong id="finalResolutionRevenueTarget">
+                                    ${{ effective_revenue_target|floatformat:0 }}
+                                </strong>
+                            </div>
+
+                            <div class="resolution-line">
+                                <span>
+                                    Operating Budget
+                                </span>
+
+                                <strong id="resolutionOperatingBudget">
+                                    ${{ effective_operating_budget|floatformat:0 }}
+                                </strong>
+                            </div>
+
+                            <div class="resolution-line">
+                                <span>
+                                    Sales Credit Policy
+                                </span>
+
+                                <strong id="resolutionCreditRate">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="resolution-line">
+                                <span>
+                                    Sales Credit Target
+                                </span>
+
+                                <strong id="resolutionCreditTarget">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="resolution-line">
+                                <span>
+                                    Minimum Selling Price
+                                </span>
+
+                                <strong id="resolutionMinimumPrice">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div class="resolution-line">
+                                <span>
+                                    Maintenance Policy
+                                </span>
+
+                                <strong id="resolutionMaintenance">
+                                    —
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="dialogue">
+
+                        <img
+                            src="{% static 'simulation/board/clarke.png' %}"
+                            alt="Mrs Clarke"
+                            class="dialogue-photo"
+                        >
+
+                        <div class="dialogue-bubble">
+
+                            <div class="dialogue-speaker">
+                                Mrs Clarke
+                            </div>
+
+                            <div class="dialogue-text">
+                                If you are comfortable with these
+                                commitments, approve the resolution.
+                                September will then begin and the board
+                                will evaluate your decisions against
+                                this annual plan.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stage-actions">
+
+                        <button
+                            type="button"
+                            class="board-btn board-btn-secondary"
+                            data-go-stage="3"
+                        >
+                            ← Revise Decisions
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="board-btn board-btn-primary"
+                        >
+                            Approve AOP and Begin September S&amp;OP →
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+
+    </section>
+
+</form>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        /* =========================================================
+           SETTINGS
+
+           Old typing speed was around 18 ms/character. Production TYPING_SPEED = 75 !!
+           This is intentionally much slower.
+           ========================================================= */
+
+        const TYPING_SPEED = 20; 
+        const AFTER_BUBBLE_PAUSE = 1000;
+
+
+        /* =========================================================
+           BASIC REFERENCES
+           ========================================================= */
+
+        const stages = Array.from(
+            document.querySelectorAll(
+                "[data-stage]"
+            )
+        );
+
+        const agendaItems = Array.from(
+            document.querySelectorAll(
+                "[data-agenda]"
+            )
+        );
+
+        const personCards = Array.from(
+            document.querySelectorAll(
+                "[data-person-card]"
+            )
+        );
+
+
+        /* =========================================================
+           HELPERS
+           ========================================================= */
+
+        function money(value) {
+            return new Intl.NumberFormat(
+                "en-US",
+                {
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0
+                }
+            ).format(value);
+        }
+
+
+        function setActivePerson(
+            personKey
+        ) {
+            personCards.forEach(
+                function (card) {
+
+                    const state =
+                        card.querySelector(
+                            ".person-state"
+                        );
+
+                    const active =
+                        card.dataset.personCard
+                        === personKey;
+
+                    card.classList.toggle(
+                        "active",
+                        active
+                    );
+
+                    if (state) {
+                        state.textContent =
+                            active
+                                ? "Speaking"
+                                : "Waiting";
+                    }
+                }
+            );
+        }
+
+
+        function activePersonForStage(
+            stage
+        ) {
+            if (
+                stage === 0
+                || stage === 1
+                || stage === 4
+            ) {
+                return "clarke";
+            }
+
+            if (stage === 2) {
+                return "daniels";
+            }
+
+            return "nauta";
+        }
+
+
+        function showStage(
+            stageNumber
+        ) {
+            stages.forEach(
+                function (stage) {
+                    stage.classList.toggle(
+                        "active",
+                        Number(
+                            stage.dataset.stage
+                        ) === stageNumber
+                    );
+                }
+            );
+
+            agendaItems.forEach(
+                function (item) {
+
+                    const index =
+                        Number(
+                            item.dataset.agenda
+                        );
+
+                    item.classList.toggle(
+                        "active",
+                        index === stageNumber
+                    );
+
+                    item.classList.toggle(
+                        "done",
+                        index < stageNumber
+                    );
+                }
+            );
+
+            setActivePerson(
+                activePersonForStage(
+                    stageNumber
+                )
+            );
+
+            if (stageNumber === 1) {
+                startClarkeStage();
+            }
+
+            if (stageNumber === 2) {
+                startDanielsStage();
+            }
+
+            if (stageNumber === 3) {
+                startNautaStage();
+            }
+
+            if (stageNumber === 4) {
+                updateResolution();
+            }
+
+            document
+                .getElementById(
+                    "boardroom"
+                )
+                .scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+        }
+
+
+        document
+            .querySelectorAll(
+                "[data-go-stage]"
+            )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            showStage(
+                                Number(
+                                    button.dataset.goStage
+                                )
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           TYPEWRITER
+           ========================================================= */
+
+        function typeBubble(
+            element,
+            callback
+        ) {
+            const output =
+                element.querySelector(
+                    ".dialogue-text"
+                );
+
+            const text =
+                element.dataset.text || "";
+
+            element.classList.remove(
+                "hidden"
+            );
+
+            output.textContent = "";
+
+            const cursor =
+                document.createElement(
+                    "span"
+                );
+
+            cursor.className =
+                "typing-cursor";
+
+            output.appendChild(
+                cursor
+            );
+
+            let index = 0;
+
+            function typeNextCharacter() {
+
+                if (
+                    index
+                    >= text.length
+                ) {
+                    cursor.remove();
+
+                    window.setTimeout(
+                        callback,
+                        AFTER_BUBBLE_PAUSE
+                    );
+
+                    return;
+                }
+
+                cursor.insertAdjacentText(
+                    "beforebegin",
+                    text[index]
+                );
+
+                index += 1;
+
+                window.setTimeout(
+                    typeNextCharacter,
+                    TYPING_SPEED
+                );
+            }
+
+            typeNextCharacter();
+        }
+
+
+        /* =========================================================
+           OPENING
+           ========================================================= */
+
+        const openingDialogues =
+            Array.from(
+                document.querySelectorAll(
+                    "[data-opening-dialogue]"
+                )
+            );
+
+        const openingActions =
+            document.getElementById(
+                "openingActions"
+            );
+
+        let openingRunToken = 0;
+
+
+        function resetOpening() {
+            openingRunToken += 1;
+
+            openingActions.classList.add(
+                "hidden"
+            );
+
+            openingDialogues.forEach(
+                function (dialogue) {
+
+                    dialogue.classList.add(
+                        "hidden"
+                    );
+
+                    dialogue
+                        .querySelector(
+                            ".dialogue-text"
+                        )
+                        .textContent = "";
+                }
+            );
+        }
+
+
+        function runOpening() {
+            resetOpening();
+
+            const token =
+                openingRunToken;
+
+            function runDialogue(
+                index
+            ) {
+                if (
+                    token
+                    !== openingRunToken
+                ) {
+                    return;
+                }
+
+                if (
+                    index
+                    >= openingDialogues.length
+                ) {
+                    openingActions.classList.remove(
+                        "hidden"
+                    );
+
+                    setActivePerson(
+                        "clarke"
+                    );
+
+                    return;
+                }
+
+                const dialogue =
+                    openingDialogues[
+                        index
+                    ];
+
+                setActivePerson(
+                    dialogue.dataset.person
+                );
+
+                typeBubble(
+                    dialogue,
+                    function () {
+                        if (
+                            token
+                            === openingRunToken
+                        ) {
+                            runDialogue(
+                                index + 1
+                            );
+                        }
+                    }
+                );
+            }
+
+            runDialogue(
+                0
+            );
+        }
+
+
+        const redoOpeningButton =
+            document.getElementById(
+                "redoOpening"
+            );
+
+        if (redoOpeningButton) {
+            redoOpeningButton.addEventListener(
+                "click",
+                runOpening
+            );
+        }
+
+
+        /* =========================================================
+           MRS CLARKE
+           ========================================================= */
+
+        let clarkeStarted = false;
+
+        const clarkeBubble1 =
+            document.getElementById(
+                "clarkeBubble1"
+            );
+
+        const clarkeMarketPanel =
+            document.getElementById(
+                "clarkeMarketPanel"
+            );
+
+        const clarkeNext1 =
+            document.getElementById(
+                "clarkeNext1"
+            );
+
+        const clarkeBubble2 =
+            document.getElementById(
+                "clarkeBubble2"
+            );
+
+        const clarkeRevenuePanel =
+            document.getElementById(
+                "clarkeRevenuePanel"
+            );
+
+        const clarkeFinish =
+            document.getElementById(
+                "clarkeFinish"
+            );
+
+        const continueToDaniels =
+            document.getElementById(
+                "continueToDaniels"
+            );
+
+        const revenueInputs =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="revenue_budget_option"]'
+                )
+            );
+
+        let currentRevenueTarget =
+            Number(
+                "{{ effective_revenue_target }}"
+            );
+
+        let currentOperatingBudget =
+            Number(
+                "{{ effective_operating_budget }}"
+            );
+
+
+        function selectedRevenueInput() {
+            return document.querySelector(
+                'input[name="revenue_budget_option"]:checked'
+            );
+        }
+
+
+        function selectedRevenueLabel() {
+            const selected =
+                selectedRevenueInput();
+
+            if (!selected) {
+                return null;
+            }
+
+            return document.querySelector(
+                `label[for="${selected.id}"]`
+            );
+        }
+
+
+        function updateRevenuePolicy() {
+            const selected =
+                selectedRevenueInput();
+
+            const label =
+                selectedRevenueLabel();
+
+            if (
+                revenueInputs.length > 0
+                && (
+                    !selected
+                    || !label
+                )
+            ) {
+                if (continueToDaniels) {
+                    continueToDaniels.disabled =
+                        true;
+                }
+
+                return;
+            }
+
+            if (
+                selected
+                && label
+            ) {
+                currentRevenueTarget =
+                    Number(
+                        label.dataset.revenueTarget
+                    );
+
+                currentOperatingBudget =
+                    Number(
+                        label.dataset.operatingBudget
+                    );
+            }
+
+            const selectedRevenueTarget =
+                document.getElementById(
+                    "selectedRevenueTarget"
+                );
+
+            const selectedOperatingBudget =
+                document.getElementById(
+                    "selectedOperatingBudget"
+                );
+
+            if (selectedRevenueTarget) {
+                selectedRevenueTarget.textContent =
+                    money(
+                        currentRevenueTarget
+                    );
+            }
+
+            if (selectedOperatingBudget) {
+                selectedOperatingBudget.textContent =
+                    money(
+                        currentOperatingBudget
+                    );
+            }
+
+            const resolutionRevenue =
+                document.getElementById(
+                    "resolutionRevenueTarget"
+                );
+
+            const finalResolutionRevenue =
+                document.getElementById(
+                    "finalResolutionRevenueTarget"
+                );
+
+            const resolutionBudget =
+                document.getElementById(
+                    "resolutionOperatingBudget"
+                );
+
+            if (resolutionRevenue) {
+                resolutionRevenue.textContent =
+                    money(
+                        currentRevenueTarget
+                    );
+            }
+
+            if (finalResolutionRevenue) {
+                finalResolutionRevenue.textContent =
+                    money(
+                        currentRevenueTarget
+                    );
+            }
+
+            if (resolutionBudget) {
+                resolutionBudget.textContent =
+                    money(
+                        currentOperatingBudget
+                    );
+            }
+
+            if (continueToDaniels) {
+                continueToDaniels.disabled =
+                    false;
+            }
+
+            updateAllCreditTargets();
+            updateCreditPolicy();
+            updateResolution();
+        }
+
+
+        revenueInputs.forEach(
+            function (input) {
+                input.addEventListener(
+                    "change",
+                    updateRevenuePolicy
+                );
+            }
+        );
+
+
+        function startClarkeStage() {
+
+            if (clarkeStarted) {
+                return;
+            }
+
+            clarkeStarted = true;
+
+            setActivePerson(
+                "clarke"
+            );
+
+            typeBubble(
+                clarkeBubble1,
+                function () {
+
+                    clarkeMarketPanel.classList.remove(
+                        "hidden"
+                    );
+
+                    clarkeNext1.classList.remove(
+                        "hidden"
+                    );
+                }
+            );
+        }
+
+
+        document
+            .getElementById(
+                "clarkeRevenueNext"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    clarkeNext1.classList.add(
+                        "hidden"
+                    );
+
+                    typeBubble(
+                        clarkeBubble2,
+                        function () {
+
+                            clarkeRevenuePanel.classList.remove(
+                                "hidden"
+                            );
+
+                            clarkeFinish.classList.remove(
+                                "hidden"
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           MR DANIELS
+           ========================================================= */
+
+        let danielsStarted = false;
+
+        const danielsBubble1 =
+            document.getElementById(
+                "danielsBubble1"
+            );
+
+        const danielsNext1 =
+            document.getElementById(
+                "danielsNext1"
+            );
+
+        const danielsBubble2 =
+            document.getElementById(
+                "danielsBubble2"
+            );
+
+        const danielsNext2 =
+            document.getElementById(
+                "danielsNext2"
+            );
+
+        const danielsPolicyPanel =
+            document.getElementById(
+                "danielsPolicyPanel"
+            );
+
+        const danielsFinish =
+            document.getElementById(
+                "danielsFinish"
+            );
+
+        const continueToNauta =
+            document.getElementById(
+                "continueToNauta"
+            );
+
+
+        function startDanielsStage() {
+
+            if (danielsStarted) {
+                return;
+            }
+
+            danielsStarted = true;
+
+            setActivePerson(
+                "daniels"
+            );
+
+            typeBubble(
+                danielsBubble1,
+                function () {
+                    danielsNext1.classList.remove(
+                        "hidden"
+                    );
+                }
+            );
+        }
+
+
+        document
+            .getElementById(
+                "danielsNextButton1"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    danielsNext1.classList.add(
+                        "hidden"
+                    );
+
+                    typeBubble(
+                        danielsBubble2,
+                        function () {
+                            danielsNext2.classList.remove(
+                                "hidden"
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        document
+            .getElementById(
+                "danielsShowPolicy"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    danielsNext2.classList.add(
+                        "hidden"
+                    );
+
+                    danielsPolicyPanel.classList.remove(
+                        "hidden"
+                    );
+
+                    danielsFinish.classList.remove(
+                        "hidden"
+                    );
+
+                    updateCreditPolicy();
+                }
+            );
+
+
+        /* =========================================================
+           SALES CREDIT
+           ========================================================= */
+
+        const creditInputs =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="sales_credit_rate"]'
+                )
+            );
+
+
+        function selectedCreditInput() {
+            return document.querySelector(
+                'input[name="sales_credit_rate"]:checked'
+            );
+        }
+
+
+        function selectedCreditLabel() {
+
+            const selected =
+                selectedCreditInput();
+
+            if (!selected) {
+                return null;
+            }
+
+            return document.querySelector(
+                `label[for="${selected.id}"]`
+            );
+        }
+
+
+        function updateAllCreditTargets() {
+
+            document
+                .querySelectorAll(
+                    "[data-credit-label]"
+                )
+                .forEach(
+                    function (label) {
+
+                        const rate =
+                            Number(
+                                label.dataset.rate
+                            );
+
+                        const target =
+                            currentRevenueTarget
+                            * rate;
+
+                        label.dataset.target =
+                            target;
+
+                        const display =
+                            label.querySelector(
+                                "[data-credit-target-display]"
+                            );
+
+                        if (display) {
+                            display.textContent =
+                                money(
+                                    target
+                                );
+                        }
+                    }
+                );
+        }
+
+
+        function updateCreditPolicy() {
+
+            const selected =
+                selectedCreditInput();
+
+            const label =
+                selectedCreditLabel();
+
+            if (
+                !selected
+                || !label
+            ) {
+                continueToNauta.disabled =
+                    true;
+
+                return;
+            }
+
+            const rate =
+                Number(
+                    selected.value
+                );
+
+            const target =
+                Number(
+                    label.dataset.target
+                );
+
+            const minimumPercent =
+                Number(
+                    label.dataset.minimumPercent
+                );
+
+
+            document
+                .getElementById(
+                    "selectedCreditRate"
+                )
+                .textContent =
+                    `${(
+                        rate * 100
+                    ).toFixed(0)}%`;
+
+
+            document
+                .getElementById(
+                    "selectedCreditTarget"
+                )
+                .textContent =
+                    money(
+                        target
+                    );
+
+
+            document
+                .getElementById(
+                    "selectedMinimumPrice"
+                )
+                .textContent =
+                    `${minimumPercent.toFixed(0)}% of standard`;
+
+
+            continueToNauta.disabled =
+                false;
+
+            updateResolution();
+        }
+
+
+        creditInputs.forEach(
+            function (input) {
+
+                input.addEventListener(
+                    "change",
+                    updateCreditPolicy
+                );
+            }
+        );
+
+
+        /* =========================================================
+           MS NAUTA
+           ========================================================= */
+
+        let nautaStarted = false;
+
+        const nautaBubble1 =
+            document.getElementById(
+                "nautaBubble1"
+            );
+
+        const nautaNext1 =
+            document.getElementById(
+                "nautaNext1"
+            );
+
+        const nautaBubble2 =
+            document.getElementById(
+                "nautaBubble2"
+            );
+
+        const nautaNext2 =
+            document.getElementById(
+                "nautaNext2"
+            );
+
+        const nautaBubble3 =
+            document.getElementById(
+                "nautaBubble3"
+            );
+
+        const maintenancePanel =
+            document.getElementById(
+                "maintenancePanel"
+            );
+
+        const nautaFinish =
+            document.getElementById(
+                "nautaFinish"
+            );
+
+        const continueToResolution =
+            document.getElementById(
+                "continueToResolution"
+            );
+
+
+        function startNautaStage() {
+
+            if (nautaStarted) {
+                return;
+            }
+
+            nautaStarted = true;
+
+            setActivePerson(
+                "nauta"
+            );
+
+            typeBubble(
+                nautaBubble1,
+                function () {
+                    nautaNext1.classList.remove(
+                        "hidden"
+                    );
+                }
+            );
+        }
+
+
+        document
+            .getElementById(
+                "nautaNextButton1"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    nautaNext1.classList.add(
+                        "hidden"
+                    );
+
+                    typeBubble(
+                        nautaBubble2,
+                        function () {
+                            nautaNext2.classList.remove(
+                                "hidden"
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        document
+            .getElementById(
+                "nautaNextButton2"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    nautaNext2.classList.add(
+                        "hidden"
+                    );
+
+                    typeBubble(
+                        nautaBubble3,
+                        function () {
+
+                            maintenancePanel.classList.remove(
+                                "hidden"
+                            );
+
+                            nautaFinish.classList.remove(
+                                "hidden"
+                            );
+
+                            updateMaintenancePolicy();
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           MAINTENANCE
+           ========================================================= */
+
+        const maintenanceInputs =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="skip_maintenance"]'
+                )
+            );
+
+
+        function selectedMaintenance() {
+            return document.querySelector(
+                'input[name="skip_maintenance"]:checked'
+            );
+        }
+
+
+        function updateMaintenancePolicy() {
+
+            const selected =
+                selectedMaintenance();
+
+            continueToResolution.disabled =
+                !selected;
+
+            updateResolution();
+        }
+
+
+        maintenanceInputs.forEach(
+            function (input) {
+
+                input.addEventListener(
+                    "change",
+                    updateMaintenancePolicy
+                );
+            }
+        );
+
+
+        /* =========================================================
+           BOARD RESOLUTION
+           ========================================================= */
+
+        function updateResolution() {
+
+            const resolutionRevenue =
+                document.getElementById(
+                    "resolutionRevenueTarget"
+                );
+
+            const finalResolutionRevenue =
+                document.getElementById(
+                    "finalResolutionRevenueTarget"
+                );
+
+            const resolutionBudget =
+                document.getElementById(
+                    "resolutionOperatingBudget"
+                );
+
+            if (resolutionRevenue) {
+                resolutionRevenue.textContent =
+                    money(
+                        currentRevenueTarget
+                    );
+            }
+
+            if (finalResolutionRevenue) {
+                finalResolutionRevenue.textContent =
+                    money(
+                        currentRevenueTarget
+                    );
+            }
+
+            if (resolutionBudget) {
+                resolutionBudget.textContent =
+                    money(
+                        currentOperatingBudget
+                    );
+            }
+
+            const creditInput =
+                selectedCreditInput();
+
+            const creditLabel =
+                selectedCreditLabel();
+
+            if (
+                creditInput
+                && creditLabel
+            ) {
+                const rate =
+                    Number(
+                        creditInput.value
+                    );
+
+                const target =
+                    Number(
+                        creditLabel.dataset.target
+                    );
+
+                const minimumPercent =
+                    Number(
+                        creditLabel.dataset.minimumPercent
+                    );
+
+
+                document
+                    .getElementById(
+                        "resolutionCreditRate"
+                    )
+                    .textContent =
+                        `${(
+                            rate * 100
+                        ).toFixed(0)}%`;
+
+
+                document
+                    .getElementById(
+                        "resolutionCreditTarget"
+                    )
+                    .textContent =
+                        money(
+                            target
+                        );
+
+
+                document
+                    .getElementById(
+                        "resolutionMinimumPrice"
+                    )
+                    .textContent =
+                        `${minimumPercent.toFixed(0)}% of standard`;
+            }
+
+
+            const maintenance =
+                selectedMaintenance();
+
+            if (maintenance) {
+
+                const defer =
+                    String(
+                        maintenance.value
+                    ).toLowerCase()
+                    === "true";
+
+
+                document
+                    .getElementById(
+                        "resolutionMaintenance"
+                    )
+                    .textContent =
+                        defer
+                            ? "Deferred — 20% demand penalty"
+                            : "Funded — capability protected";
+            }
+        }
+
+
+        /* =========================================================
+           FINAL CLIENT-SIDE GUARD
+           ========================================================= */
+
+        const annualPlanForm =
+            document.getElementById(
+                "annual-plan-form"
+            );
+
+        if (annualPlanForm) {
+            annualPlanForm.addEventListener(
+                "submit",
+                function (event) {
+
+                    if (
+                        revenueInputs.length > 0
+                        && !selectedRevenueInput()
+                    ) {
+                        event.preventDefault();
+
+                        showStage(1);
+
+                        clarkeRevenuePanel.classList.remove(
+                            "hidden"
+                        );
+
+                        clarkeFinish.classList.remove(
+                            "hidden"
+                        );
+
+                        continueToDaniels.disabled =
+                            true;
+
+                        return;
+                    }
+
+                    if (!selectedCreditInput()) {
+                        event.preventDefault();
+
+                        showStage(2);
+                        return;
+                    }
+
+                    if (!selectedMaintenance()) {
+                        event.preventDefault();
+
+                        showStage(3);
+                    }
+                }
+            );
+        }
+
+
+        /* =========================================================
+           START
+           ========================================================= */
+
+        updateAllCreditTargets();
+        updateRevenuePolicy();
+        updateCreditPolicy();
+        updateMaintenancePolicy();
+
+        runOpening();
+    }
+);
+</script>
+{% endblock %}
